@@ -1,0 +1,44 @@
+{
+  "name": "strcalc",
+  "version": "1.0.0",
+  "description": "STRcalc - Investment Decision Tool for Short-Term Rental Properties",
+  "private": true,
+  "homepage": "https://strcalc.vacationhomegroup.com",
+  "engines": {
+    "node": "18.x || 20.x"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.0",
+    "html2pdf.js": "^0.10.1"
+  },
+  "devDependencies": {
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "echo 'Add eslint configuration for linting'"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
