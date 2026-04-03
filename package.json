@@ -1,9 +1,9 @@
 {
-  "name": "strcalc",
+  "name": "strinvestcalc",
   "version": "1.0.0",
-  "description": "STRcalc - Investment Decision Tool for Short-Term Rental Properties",
+  "description": "STRInvestCalc - Professional Investment Analysis Tool for Short-Term Rental Properties",
   "private": true,
-  "homepage": "https://strcalc.vacationhomegroup.com",
+  "homepage": "https://strinvestcalc.com",
   "engines": {
     "node": "18.x || 20.x"
   },
@@ -21,24 +21,13 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "lint": "echo 'Add eslint configuration for linting'"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
+    "extends": ["react-app"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   }
 }
