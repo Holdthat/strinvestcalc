@@ -5,11 +5,12 @@ Professional investment analysis tool for short-term rental property owners.
 ## Features
 
 - Hold vs. Sell vs. 1031 Exchange analysis
-- Interactive sensitivity sliders
-- Professional dashboards
-- Real-time calculations
-- Scenario persistence
-- PDF export
+- Interactive sensitivity sliders (real-time recalculation)
+- Recharts visualizations (line, bar, pie)
+- Year-by-year comparison table
+- 4-step guided questionnaire
+- VHG branding throughout
+- Vercel deployment ready
 
 ## Quick Start
 
@@ -26,12 +27,14 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run build
 ```
 
-## Deployment
+## Deploy to Vercel
 
-Deploy to Vercel:
 1. Push to GitHub
 2. Connect GitHub to Vercel
-3. Automatic deployment on push to main
+3. Framework: Create React App
+4. Build Command: `npm run build`
+5. Output Directory: `build`
+6. Automatic deployment on push to main
 
 ## License
 
