@@ -3,6 +3,7 @@
  * =========================================
  * Vacation Home Group
  * Landing page + embedded calculator + Pro tier with email gate
+ * Version 2.0.0
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
@@ -101,7 +102,9 @@ const fmtK=n=>{const v=n||0;if(Math.abs(v)>=1e6)return`$${(v/1e6).toFixed(1)}M`;
 // ═══════════════════════════════════════════════════════════════
 // LOGOS
 // ═══════════════════════════════════════════════════════════════
-const VHGLogoMark=({size=36})=>(<svg viewBox="0 0 64 64" width={size} height={size} style={{flexShrink:0}}><rect width="64" height="64" rx="12" fill="var(--bg-card)" stroke="var(--border-primary)" strokeWidth="1"/><path d="M14 38 L22 26 L28 31 L34 20 L40 27 L44 23 L50 38" fill="none" stroke="#167A5E" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round"/><line x1="12" y1="38" x2="52" y2="38" stroke="#9A7820" strokeWidth="0.7"/><text x="32" y="50" textAnchor="middle" fill="var(--text-primary)" fontFamily="Georgia,serif" fontSize="8" fontWeight="700" letterSpacing="0.04em">VH</text><text x="32" y="58" textAnchor="middle" fill="#9A7820" fontFamily="Georgia,serif" fontSize="7" fontStyle="italic">group</text></svg>);
+const APP_VERSION='2.0.0';
+
+const VHGLogoMark=({size=36})=>(<svg viewBox="0 0 64 64" width={size} height={size} style={{flexShrink:0}}><rect width="64" height="64" rx="12" fill="var(--bg-card)" stroke="var(--border-primary)" strokeWidth="1"/><path d="M10 38 L18 26 L24 30 L32 18 L38 26 L42 22 L54 38" fill="none" stroke="#10B981" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/><line x1="8" y1="38" x2="56" y2="38" stroke="#C8962E" strokeWidth="0.8"/><text x="32" y="50" textAnchor="middle" fill="var(--text-primary)" fontFamily="Georgia,serif" fontSize="8" fontWeight="700" letterSpacing="0.04em">VH</text><text x="32" y="58" textAnchor="middle" fill="#C8962E" fontFamily="Georgia,serif" fontSize="7" fontStyle="italic">group</text></svg>);
 
 const VHGFooterLogo=({dark})=>{const f=dark?'#FFFFFF':'#1A1A1A';return(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 170" width="220" height="117"><path d="M85 28 L110 12 L128 22 L155 4 L178 18 L195 10 L235 28" fill="none" stroke="#10B981" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/><line x1="80" y1="28" x2="240" y2="28" stroke="#C8962E" strokeWidth="0.8"/><text x="160" y="62" textAnchor="middle" fill={f} fontFamily="Georgia,serif" fontSize="34" fontWeight="700" letterSpacing="0.08em">VACATION</text><text x="160" y="95" textAnchor="middle" fill={f} fontFamily="Georgia,serif" fontSize="34" fontWeight="700" letterSpacing="0.08em">HOME</text><line x1="60" y1="103" x2="112" y2="103" stroke="#C8962E" strokeWidth="1.5" strokeLinecap="round"/><line x1="60" y1="109" x2="98" y2="109" stroke="#C8962E" strokeWidth="1" strokeLinecap="round"/><text x="165" y="138" textAnchor="middle" fill="#C8962E" fontFamily="Georgia,serif" fontSize="32" fontStyle="italic">group</text></svg>);};
 
@@ -116,7 +119,7 @@ const InputField=({label,name,value,onChange,type='text',prefix,suffix,placehold
 
 const SelectField=({label,name,value,onChange,options})=>(<div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:600,color:'var(--text-secondary)',marginBottom:6}}>{label}</label><select name={name} value={value} onChange={onChange} style={{width:'100%',padding:'10px 12px',background:'var(--input-bg)',border:'1px solid var(--border-primary)',borderRadius:8,color:'var(--text-primary)',fontSize:14,outline:'none'}}>{options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></div>);
 
-const Slider=({label,min,max,step,value,onChange,displayValue})=>(<div style={{marginBottom:20,padding:14,background:'var(--bg-card)',borderRadius:8,border:'1px solid var(--border-primary)'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}><span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>{label}</span><span style={{fontSize:14,fontWeight:600,color:'var(--accent)'}}>{displayValue}</span></div><input type="range" min={min} max={max} step={step} value={value} onChange={onChange} style={{width:'100%',height:6,borderRadius:3,background:`linear-gradient(to right,var(--accent) 0%,var(--accent) ${((value-min)/(max-min))*100}%,var(--border-primary) ${((value-min)/(max-min))*100}%,var(--border-primary) 100%)`}}/><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-faint)',marginTop:4}}><span>{min}</span><span>{max}</span></div></div>);
+const Slider=({label,min,max,step,value,onChange,displayValue,suffix='%'})=>{const pct=Math.max(0,Math.min(100,((value-min)/(max-min))*100));return(<div style={{marginBottom:20,padding:14,background:'var(--bg-card)',borderRadius:8,border:'1px solid var(--border-primary)'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}><span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>{label}</span><span style={{fontSize:14,fontWeight:600,color:'var(--accent)'}}>{displayValue}</span></div><input type="range" min={min} max={max} step={step} value={value} onChange={e=>{const raw=Number(e.target.value);const rounded=Math.round(raw/step)*step;onChange({target:{value:rounded}});}} style={{width:'100%',height:6,borderRadius:3,background:`linear-gradient(to right,var(--accent) 0%,var(--accent) ${pct}%,var(--border-primary) ${pct}%,var(--border-primary) 100%)`}}/><div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--text-faint)',marginTop:4}}><span>{min}{suffix}</span><span>{max}{suffix}</span></div></div>);};
 
 const ThemeToggle=({dark,setDark})=>(<button onClick={()=>setDark(!dark)} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border-primary)',background:'rgba(255,255,255,0.06)',color:'var(--text-primary)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>{dark?'\u2600':'\u263E'}</button>);
 
@@ -128,7 +131,8 @@ const VHGFooter=({dark})=>(<footer style={{borderTop:'1px solid var(--border-pri
   <div style={{fontSize:14,color:'var(--text-muted)',fontStyle:'italic',fontFamily:'Georgia,serif'}}>Your Retreat, Our Expertise</div>
   <div style={{fontSize:14,color:'var(--text-primary)',marginBottom:28,fontFamily:"'DM Mono',monospace"}}>Real Broker NH, LLC</div>
   <div style={{fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:800,color:'var(--text-primary)',marginBottom:2}}>STR<span style={{color:'var(--gold)'}}>Invest</span>Calc</div>
-  <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:16}}>by Vacation Home Group</div>
+  <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>by Vacation Home Group</div>
+  <div style={{fontSize:11,color:'var(--text-faint)',marginBottom:16,fontFamily:"'JetBrains Mono',monospace"}}>v{APP_VERSION}</div>
   <GoldDivider/>
   <div style={{display:'flex',justifyContent:'center',gap:60,marginBottom:20,flexWrap:'wrap'}}>
     <div style={{textAlign:'center'}}><div style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,color:'var(--text-primary)'}}>Joe Mori</div><div style={{fontSize:13,color:'var(--text-muted)',marginBottom:4}}>REALTOR&reg; &middot; Vacation Home Specialist</div><div style={{fontSize:14,color:'var(--text-muted)'}}><a href="tel:6039017777" style={{color:'var(--text-primary)',textDecoration:'none'}}>603-901-7777</a><span style={{margin:'0 4px'}}>&middot;</span><a href="mailto:joemori@vacationhome.group" style={{color:'var(--gold)',textDecoration:'none'}}>joemori@vacationhome.group</a></div></div>
@@ -148,7 +152,7 @@ const VHGFooter=({dark})=>(<footer style={{borderTop:'1px solid var(--border-pri
 const NavBar=({dark,setDark,onNav})=>(<nav style={{borderBottom:'1px solid var(--border-primary)',padding:'16px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',background:dark?'linear-gradient(135deg,#0B1120,#151D2E)':'linear-gradient(135deg,#FFFFFF,#F5F5F5)',position:'sticky',top:0,zIndex:100}}>
   <div style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={()=>onNav&&onNav('landing')}>
     <VHGLogoMark size={36}/>
-    <div><span style={{fontSize:20,fontWeight:700,color:'var(--text-primary)'}}>STR<span style={{color:'var(--gold)'}}>Invest</span>Calc</span><div style={{fontSize:11,color:'var(--gold)',fontStyle:'italic',fontFamily:'Georgia,serif'}}>by Vacation Home Group</div></div>
+    <div><span style={{fontSize:20,fontWeight:700,color:'var(--text-primary)'}}>STR<span style={{color:'var(--gold)'}}>Invest</span>Calc</span><div style={{fontSize:11,color:'var(--gold)',fontStyle:'italic',fontFamily:'Georgia,serif'}}>by Vacation Home Group <span style={{color:'var(--text-faint)',fontStyle:'normal',fontFamily:"'JetBrains Mono',monospace",fontSize:9}}>v{APP_VERSION}</span></div></div>
   </div>
   <div style={{display:'flex',alignItems:'center',gap:16}}>
     {onNav&&<><button onClick={()=>onNav('features')} style={{background:'none',border:'none',color:'var(--text-muted)',fontSize:13,cursor:'pointer'}}>Features</button><button onClick={()=>onNav('calculator')} style={{background:'none',border:'none',color:'var(--accent)',fontSize:13,fontWeight:700,cursor:'pointer'}}>Calculator</button><button onClick={()=>onNav('pro')} style={{background:'none',border:'none',color:'var(--gold)',fontSize:13,fontWeight:700,cursor:'pointer'}}>&star; Pro</button></>}
@@ -287,10 +291,10 @@ const Dashboard=({formData,sellResult,exchangeResult,onEditAssumptions,dark,isPr
 
       {/* Sliders */}
       <div><Card><SectionLabel>Sensitivity Sliders</SectionLabel><p style={{fontSize:12,color:'var(--text-muted)',marginBottom:20}}>Adjust assumptions &mdash; charts update in real time.</p>
-        <Slider label="Vacancy Rate" min={0} max={25} step={1} value={sens.vacancyRate} displayValue={`${sens.vacancyRate}%`} onChange={e=>setSens({...sens,vacancyRate:parseFloat(e.target.value)})}/>
-        <Slider label="Appreciation" min={-1} max={6} step={0.5} value={sens.appreciation} displayValue={`${sens.appreciation}%`} onChange={e=>setSens({...sens,appreciation:parseFloat(e.target.value)})}/>
-        <Slider label="Alt. Return" min={2} max={12} step={0.5} value={sens.altReturn} displayValue={`${sens.altReturn}%`} onChange={e=>setSens({...sens,altReturn:parseFloat(e.target.value)})}/>
-        <Slider label="Years to Hold" min={1} max={10} step={1} value={sens.yearsToHold} displayValue={`${sens.yearsToHold} yrs`} onChange={e=>setSens({...sens,yearsToHold:parseInt(e.target.value)})}/>
+        <Slider label="Vacancy Rate" min={0} max={100} step={1} value={sens.vacancyRate} displayValue={`${Math.round(sens.vacancyRate)}%`} onChange={e=>setSens({...sens,vacancyRate:e.target.value})}/>
+        <Slider label="Appreciation" min={-5} max={15} step={1} value={sens.appreciation} displayValue={`${Math.round(sens.appreciation)}%`} onChange={e=>setSens({...sens,appreciation:e.target.value})}/>
+        <Slider label="Alt. Return" min={0} max={15} step={1} value={sens.altReturn} displayValue={`${Math.round(sens.altReturn)}%`} onChange={e=>setSens({...sens,altReturn:e.target.value})}/>
+        <Slider label="Years to Hold" min={1} max={30} step={1} value={sens.yearsToHold} displayValue={`${sens.yearsToHold} yrs`} suffix=" yrs" onChange={e=>setSens({...sens,yearsToHold:e.target.value})}/>
         {!isPro&&<div style={{marginTop:16,padding:12,borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.3)',fontSize:12,color:'var(--text-muted)',textAlign:'center'}}><strong style={{color:'var(--gold)'}}>&star; Pro</strong> unlocks additional sliders, PDF export, and more.<br/><button onClick={onProClick} style={{marginTop:8,padding:'6px 16px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>Unlock Pro</button></div>}
       </Card></div>
     </div>
