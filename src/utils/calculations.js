@@ -32,7 +32,8 @@ export function calculateHoldScenario(data, years = 10) {
 
 export function calculateSellScenario(data, years = 10, altReturn = 0.07) {
   const cv=parseFloat(data.currentValue)||0, pp=parseFloat(data.purchasePrice)||0, mortBal=parseFloat(data.mortgageBalance)||0;
-  const sellCosts=cv*0.075, depBasis=pp*0.85, yrsOwned=parseInt(data.yearsOwned)||1;
+  const sellingPct=(parseFloat(data.sellingCostsPct)||7.5)/100;
+  const sellCosts=cv*sellingPct, depBasis=pp*0.85, yrsOwned=parseInt(data.yearsOwned)||1;
   const totDep=Math.min((depBasis/27.5)*yrsOwned,depBasis), adjBasis=pp-totDep;
   const capGain=cv-adjBasis, depRecap=totDep*0.25, ltGainsTax=Math.max(0,capGain-totDep)*0.15;
   const totTax=depRecap+ltGainsTax, gross=cv-mortBal, net=gross-sellCosts-totTax;
