@@ -8,7 +8,7 @@ const defaultForm = {
   mortgageBalance:'',mortgageRate:'',mortgageYearsRemaining:'',roofAge:'5',hvacAge:'5',
   waterHeaterAge:'3',capRate:'',annualAppreciation:'3',alternativeInvestment:'stock-market',
   alternativeReturn:'7',exitStrategy:'undecided',replacementValue:'',replacementRent:'',
-  replacementExpenses:'',taxBracket:'32',
+  replacementExpenses:'',taxBracket:'32',sellingCostsPct:'7.5',
 };
 
 export default function Questionnaire({onComplete, initialData, dark}) {
@@ -24,8 +24,8 @@ export default function Questionnaire({onComplete, initialData, dark}) {
     if(step===2){if(!form.annualExpenses&&form.annualExpenses!=='0')e.annualExpenses='Required';}
     setErrors(e); return Object.keys(e).length===0;
   };
-  const next=()=>{if(validate())setStep(s=>Math.min(s+1,totalSteps));};
-  const prev=()=>setStep(s=>Math.max(s-1,1));
+  const next=()=>{if(validate()){setStep(s=>Math.min(s+1,totalSteps));window.scrollTo({top:0,behavior:'smooth'});}};
+  const prev=()=>{setStep(s=>Math.max(s-1,1));window.scrollTo({top:0,behavior:'smooth'});};
   const submit=()=>{if(validate())onComplete(form);};
 
   return (
@@ -90,6 +90,8 @@ export default function Questionnaire({onComplete, initialData, dark}) {
           <SectionLabel>Alternative Investment</SectionLabel>
           <SelectField label="Invest proceeds where?" name="alternativeInvestment" value={form.alternativeInvestment} onChange={hc} tip="If you sell, where would the after-tax proceeds go?" options={[{value:'stock-market',label:'Stock Market (S&P 500)'},{value:'bonds',label:'Bonds / Fixed Income'},{value:'another-property',label:'Another Property (non-1031)'},{value:'mixed',label:'Mixed Portfolio'}]}/>
           <InputField label="Expected Return" name="alternativeReturn" value={form.alternativeReturn} onChange={hc} type="number" suffix="%" tip="Annual return on your alternative investment. S&P 500 averages ~10% historically."/>
+          <SectionLabel>Selling Costs</SectionLabel>
+          <InputField label="Total Selling Costs" name="sellingCostsPct" value={form.sellingCostsPct} onChange={hc} type="number" suffix="%" tip="Realtor commissions + closing costs as a % of sale price. Standard is 7-8% (6% agent + 1.5% closing). Private sales can be 1-3%."/>
           <SectionLabel>Exit Strategy Interest</SectionLabel>
           <SelectField label="What are you considering?" name="exitStrategy" value={form.exitStrategy} onChange={hc} options={[{value:'undecided',label:"Not sure yet — show me the data"},{value:'hold',label:'Leaning toward holding'},{value:'sell',label:'Leaning toward selling'},{value:'1031',label:'Interested in 1031 Exchange'}]}/>
           {form.exitStrategy==='1031'&&(<>
@@ -114,6 +116,7 @@ export default function Questionnaire({onComplete, initialData, dark}) {
             <p><strong style={{color:'var(--gold)'}}>Appreciation:</strong> {form.annualAppreciation}%/yr</p>
             <p><strong style={{color:'var(--gold)'}}>Alt. Return:</strong> {form.alternativeReturn}%</p>
             <p><strong style={{color:'var(--gold)'}}>Tax Bracket:</strong> {form.taxBracket}%</p>
+            <p><strong style={{color:'var(--gold)'}}>Selling Costs:</strong> {form.sellingCostsPct}%</p>
             <p><strong style={{color:'var(--gold)'}}>Strategy:</strong> {form.exitStrategy}</p>
           </div>
           <div style={{marginTop:20,padding:12,borderRadius:8,background:'var(--bg-subtle)',border:'1px solid var(--border-accent)',fontSize:13,color:'var(--text-muted)'}}>

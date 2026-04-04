@@ -29,7 +29,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
 
   // Mortgage Scenarios (Pro)
   const [mortScenarios, setMortScenarios] = useState([
-    {label:'Current',principal:parseFloat(formData.mortgageBalance)||0,rate:parseFloat(formData.mortgageRate)*100||6.5,term:parseInt(formData.mortgageYearsRemaining)||30},
+    {label:'Current',principal:parseFloat(formData.mortgageBalance)||0,rate:Math.round(parseFloat(formData.mortgageRate)*10000)/100||6.5,term:parseInt(formData.mortgageYearsRemaining)||30},
     {label:'Refi Option',principal:parseFloat(formData.mortgageBalance)||0,rate:5.5,term:30},
   ]);
 
@@ -326,12 +326,12 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         <div style={{padding:14,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
           <div style={{fontSize:10,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Straight-Line</div>
           <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{fmt(taxBenefits.annualStraightLine)}<span style={{fontSize:11,color:'var(--text-muted)'}}>/yr</span></div>
-          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalSLSavings10yr)}</div>
+          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>{sens.yearsToHold}yr savings: {fmt(taxBenefits.totalSLSavings10yr)}</div>
         </div>
         <div style={{padding:14,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--gold-subtle)'}}>
           <div style={{fontSize:10,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Cost Segregation</div>
           <div style={{fontSize:20,fontWeight:700,color:'var(--gold)'}}>{fmt(taxBenefits.costSegYear1Bonus)}<span style={{fontSize:11,color:'var(--text-muted)'}}> yr1</span></div>
-          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalCSSavings10yr)}</div>
+          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>{sens.yearsToHold}yr savings: {fmt(taxBenefits.totalCSSavings10yr)}</div>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={220}>
@@ -384,11 +384,18 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
             </div>
           ))}
         </div>
-        {results.length>=2&&results[0].calc.monthlyPayment>0&&(
-          <div style={{padding:12,borderRadius:8,background:'var(--bg-subtle)',border:'1px solid var(--border-accent)',fontSize:14,color:'var(--text-secondary)'}}>
-            <strong>{results[1].label}</strong> saves <strong style={{color:'var(--accent)'}}>{fmt(Math.abs(results[0].calc.monthlyPayment-results[1].calc.monthlyPayment))}/mo</strong> ({fmt(Math.abs(results[0].calc.totalInterest-results[1].calc.totalInterest))} total interest {results[1].calc.totalInterest<results[0].calc.totalInterest?'saved':'more'})
-          </div>
-        )}
+        {results.length>=2&&results[0].calc.monthlyPayment>0&&results[1].calc.monthlyPayment>0&&(()=>{
+          const r0=results[0].calc, r1=results[1].calc;
+          const monthlyDiff=r1.monthlyPayment-r0.monthlyPayment;
+          const interestDiff=r1.totalInterest-r0.totalInterest;
+          const monthlyLabel=monthlyDiff>0?`costs ${fmt(monthlyDiff)} more/mo`:`saves ${fmt(Math.abs(monthlyDiff))}/mo`;
+          const interestLabel=interestDiff>0?`${fmt(interestDiff)} more total interest`:`${fmt(Math.abs(interestDiff))} less total interest`;
+          return (
+            <div style={{padding:12,borderRadius:8,background:'var(--bg-subtle)',border:'1px solid var(--border-accent)',fontSize:14,color:'var(--text-secondary)'}}>
+              <strong>{results[1].label}</strong> {monthlyLabel} and pays <strong style={{color:interestDiff<=0?'var(--accent)':'var(--red)'}}>{interestLabel}</strong>.
+            </div>
+          );
+        })()}
       </Card>
 
       {/* Remaining Balance Over Time */}
