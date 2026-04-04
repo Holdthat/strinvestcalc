@@ -1,24 +1,21 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area, RadarChart, Radar, PolarGrid,
+  BarChart, Bar, AreaChart, Area, RadarChart, Radar, PolarGrid,
   PolarAngleAxis, PolarRadiusAxis, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell, ComposedChart,
+  ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Line,
 } from 'recharts';
 import { Card, SectionLabel, Slider, TabBar, ChartTooltip, InputField, SelectField } from './UI';
 import { calculateHoldScenario, calculateSellScenario, calculate1031Scenario, calculateTaxBenefits, calculateMortgageScenario, fmt, fmtK } from '../utils/calculations';
 import { chartColors } from '../utils/theme';
 
-// ═══════════════════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════════════════
 export default function Dashboard({formData, sellResult, exchangeResult, onEditAssumptions, dark, isPro, onProClick}) {
   const show1031 = !!exchangeResult;
   const colors = chartColors(dark);
 
-  // Active tab for mobile layout
   const [activeTab, setActiveTab] = useState('overview');
+  const [slidersOpen, setSlidersOpen] = useState(false);
 
-  // Sensitivity sliders
+  // Sensitivity
   const [sens, setSens] = useState({
     vacancyRate: parseFloat(formData.vacancyRate)||10,
     appreciation: parseFloat(formData.annualAppreciation)||3,
@@ -51,10 +48,8 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   }, [formData, sens, show1031]);
   const {hold, sell, exch} = results;
 
-  // Tax Benefits (Pro)
   const taxBenefits = useMemo(() => calculateTaxBenefits(formData, sens.yearsToHold), [formData, sens.yearsToHold]);
 
-  // Recommendation
   const rec = useMemo(() => {
     const hW=hold.totalWealth, sW=sell.totalWealthAtEnd, xW=exch?.totalWealth||0;
     if(show1031&&xW>hW&&xW>sW) return {text:'1031 Exchange',color:'var(--purple)'};
@@ -77,8 +72,8 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     year:`Yr ${d.year}`,revenue:d.effectiveRent,expenses:-(d.opExpenses+d.maintenance),debtService:-d.debtService,net:d.netCashFlow
   })), [hold]);
 
-  const equityGrowthChart = useMemo(() => hold.yearlyData.map(d => ({
-    year:`Yr ${d.year}`,equity:d.equity,cashFlow:d.cumulativeCashFlow,total:d.equity+d.cumulativeCashFlow,
+  const equityChart = useMemo(() => hold.yearlyData.map(d => ({
+    year:`Yr ${d.year}`,equity:d.equity,cashFlow:d.cumulativeCashFlow,
   })), [hold]);
 
   const expensePie = useMemo(() => {
@@ -86,14 +81,13 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     return [{name:'Operating',value:y.opExpenses||0,color:colors.blue},{name:'Maintenance',value:y.maintenance||0,color:colors.gold},{name:'Debt Service',value:y.debtService||0,color:colors.red}].filter(d=>d.value>0);
   }, [hold, colors]);
 
-  // Radar chart for scenario comparison
   const radarData = useMemo(() => {
     const hW=hold.totalWealth,sW=sell.totalWealthAtEnd,xW=exch?.totalWealth||0;
     const maxW=Math.max(hW,sW,xW,1);
-    const hCF=hold.totalCashFlow,sCF=0,xCF=exch?.yearlyData?.reduce((s,d)=>s+d.netCashFlow,0)||0;
+    const hCF=hold.totalCashFlow,xCF=exch?.yearlyData?.reduce((s,d)=>s+d.netCashFlow,0)||0;
     const maxCF=Math.max(Math.abs(hCF),Math.abs(xCF),1);
     return [
-      {metric:'Total Wealth',hold:hW/maxW*100,sell:sW/maxW*100,...(show1031?{exchange:xW/maxW*100}:{})},
+      {metric:'Wealth',hold:hW/maxW*100,sell:sW/maxW*100,...(show1031?{exchange:xW/maxW*100}:{})},
       {metric:'Cash Flow',hold:Math.max(0,hCF/maxCF*100),sell:0,...(show1031?{exchange:Math.max(0,xCF/maxCF*100)}:{})},
       {metric:'Tax Efficiency',hold:60,sell:30,...(show1031?{exchange:95}:{})},
       {metric:'Liquidity',hold:20,sell:95,...(show1031?{exchange:15}:{})},
@@ -101,27 +95,16 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     ];
   }, [hold, sell, exch, show1031]);
 
-  // ── Snapshot handlers ──
+  // ── Handlers ──
   const saveSnapshot = () => {
     if(!snapName.trim()) return;
     setSnapshots([...snapshots,{name:snapName,sens:{...sens},timestamp:Date.now()}]);
     setSnapName('');
   };
-  const loadSnapshot = (snap) => setSens({...snap.sens});
 
-  // ── AI Summary ──
   const generateAI = async () => {
     setAiLoading(true);
-    const prompt = `You are a real estate investment analyst. Based on these numbers for a ${formData.propertyType} in ${formData.location}:
-- Current Value: ${fmt(formData.currentValue)}, Purchase Price: ${fmt(formData.purchasePrice)}
-- Annual Rent: ${fmt(formData.annualRent)}, Expenses: ${fmt(formData.annualExpenses)}, Vacancy: ${sens.vacancyRate}%
-- Mortgage: ${fmt(formData.mortgageBalance)} at ${(parseFloat(formData.mortgageRate)*100).toFixed(1)}%
-- Hold ${sens.yearsToHold}yr Total Wealth: ${fmtK(hold.totalWealth)}, Sell & Invest: ${fmtK(sell.totalWealthAtEnd)}${show1031?`, 1031 Exchange: ${fmtK(exch.totalWealth)}`:''}
-- Recommendation: ${rec.text} (advantage: ${fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))})
-- Appreciation: ${sens.appreciation}%, Alt Return: ${sens.altReturn}%
-
-Write a 3-4 sentence plain-English investment summary. Be specific with numbers. End with the key risk to watch.`;
-
+    const prompt = `You are a real estate investment analyst. Based on these numbers for a ${formData.propertyType} in ${formData.location}: Current Value: ${fmt(formData.currentValue)}, Purchase Price: ${fmt(formData.purchasePrice)}, Annual Rent: ${fmt(formData.annualRent)}, Expenses: ${fmt(formData.annualExpenses)}, Vacancy: ${sens.vacancyRate}%, Mortgage: ${fmt(formData.mortgageBalance)} at ${(parseFloat(formData.mortgageRate)*100).toFixed(1)}%, Hold ${sens.yearsToHold}yr Total: ${fmtK(hold.totalWealth)}, Sell & Invest: ${fmtK(sell.totalWealthAtEnd)}${show1031?`, 1031: ${fmtK(exch.totalWealth)}`:''}. Recommendation: ${rec.text}. Write 3-4 sentences. Be specific with numbers. End with the key risk.`;
     try {
       if (aiProvider === 'claude') {
         const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -131,44 +114,56 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
         const data = await resp.json();
         setAiSummary(data.content?.[0]?.text || 'Unable to generate summary.');
       } else {
-        // Gemini placeholder - would need API key
         setAiSummary('Gemini integration requires an API key. Configure in settings to enable free AI summaries.');
       }
-    } catch(err) {
-      setAiSummary('AI summary unavailable. Check your connection and try again.');
-    }
+    } catch(err) { setAiSummary('AI summary unavailable. Check your connection and try again.'); }
     setAiLoading(false);
   };
 
-  // ── Tab definitions ──
-  const tabs = [
-    {id:'overview',label:'Overview'},
-    {id:'charts',label:'Charts'},
-    {id:'table',label:'Table'},
-    {id:'sliders',label:'Sliders'},
-    ...(isPro ? [
-      {id:'tax',label:'Tax Benefits'},
-      {id:'mortgage',label:'Mortgage'},
-      {id:'snapshots',label:'What-If'},
-      {id:'ai',label:'AI Summary'},
-    ] : []),
-  ];
+  // ═══════════════════════════════════════════════════════════
+  // ASSUMPTIONS BAR — always visible, collapsible on mobile
+  // ═══════════════════════════════════════════════════════════
+  const AssumptionsBar = () => (
+    <div style={{background:'var(--bg-card)',border:'1px solid var(--border-primary)',borderRadius:10,padding:slidersOpen?'16px 16px 8px':'12px 16px',marginBottom:16,transition:'padding 0.2s'}}>
+      {/* Collapsed: summary row + toggle */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,cursor:'pointer'}} onClick={()=>setSlidersOpen(!slidersOpen)}>
+        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>ASSUMPTIONS</span>
+          <span style={{fontSize:12,color:'var(--text-muted)'}}>
+            Vac {Math.round(sens.vacancyRate)}% &middot; App {Math.round(sens.appreciation)}% &middot; Alt {Math.round(sens.altReturn)}% &middot; {sens.yearsToHold}yr
+          </span>
+        </div>
+        <button style={{background:'none',border:'1px solid var(--border-primary)',borderRadius:6,padding:'4px 10px',color:'var(--accent)',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0}}>
+          {slidersOpen ? 'Collapse \u25B2' : 'Tune \u25BC'}
+        </button>
+      </div>
+      {/* Expanded: sliders */}
+      {slidersOpen && (
+        <div style={{marginTop:16,display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:8}}>
+          <Slider label="Vacancy" min={0} max={100} step={1} value={sens.vacancyRate} displayValue={`${Math.round(sens.vacancyRate)}%`} onChange={e=>setSens({...sens,vacancyRate:e.target.value})}/>
+          <Slider label="Appreciation" min={-5} max={15} step={1} value={sens.appreciation} displayValue={`${Math.round(sens.appreciation)}%`} onChange={e=>setSens({...sens,appreciation:e.target.value})}/>
+          <Slider label="Alt. Return" min={0} max={15} step={1} value={sens.altReturn} displayValue={`${Math.round(sens.altReturn)}%`} onChange={e=>setSens({...sens,altReturn:e.target.value})}/>
+          <Slider label="Hold Period" min={1} max={30} step={1} value={sens.yearsToHold} displayValue={`${sens.yearsToHold} yrs`} suffix=" yrs" onChange={e=>setSens({...sens,yearsToHold:e.target.value})}/>
+        </div>
+      )}
+    </div>
+  );
 
-  // ── Render sections ──
+  // ═══════════════════════════════════════════════════════════
+  // TAB: OVERVIEW — metric cards + wealth chart + radar
+  // ═══════════════════════════════════════════════════════════
   const renderOverview = () => (
     <>
-      {/* Metric Cards - responsive grid */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:12,marginBottom:24}}>
-        <Card><SectionLabel>Hold Total</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--accent)'}}>{fmtK(hold.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>{sens.yearsToHold}yr equity+cash</p></Card>
-        <Card><SectionLabel>Sell &amp; Invest</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>At {sens.altReturn}% return</p></Card>
-        {show1031&&<Card><SectionLabel>1031 Exchange</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>Tax-deferred: {fmtK(exch.taxDeferred)}</p></Card>}
-        <Card style={{background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel>Recommendation</SectionLabel><div style={{fontSize:20,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:20}}>
+        <Card style={{padding:'16px 18px'}}><SectionLabel>Hold Total</SectionLabel><div style={{fontSize:22,fontWeight:700,color:'var(--accent)'}}>{fmtK(hold.totalWealth)}</div><p style={{fontSize:10,color:'var(--text-muted)',marginTop:2}}>{sens.yearsToHold}yr equity+cash</p></Card>
+        <Card style={{padding:'16px 18px'}}><SectionLabel>Sell &amp; Invest</SectionLabel><div style={{fontSize:22,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:10,color:'var(--text-muted)',marginTop:2}}>At {sens.altReturn}% return</p></Card>
+        {show1031&&<Card style={{padding:'16px 18px'}}><SectionLabel>1031 Exchange</SectionLabel><div style={{fontSize:22,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:10,color:'var(--text-muted)',marginTop:2}}>Deferred: {fmtK(exch.taxDeferred)}</p></Card>}
+        <Card style={{padding:'16px 18px',background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel>Recommendation</SectionLabel><div style={{fontSize:18,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:10,color:'var(--text-muted)',marginTop:2}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
       </div>
 
-      {/* Quick wealth chart */}
       <Card style={{marginBottom:16}}>
         <SectionLabel>Cumulative Wealth</SectionLabel>
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={wealthChart} margin={{top:10,right:10,left:0,bottom:0}}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
             <XAxis dataKey="year" stroke={colors.muted} fontSize={11}/>
@@ -182,10 +177,9 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
         </ResponsiveContainer>
       </Card>
 
-      {/* Radar comparison */}
       <Card>
-        <SectionLabel>Scenario Comparison</SectionLabel>
-        <ResponsiveContainer width="100%" height={260}>
+        <SectionLabel>Scenario Radar</SectionLabel>
+        <ResponsiveContainer width="100%" height={240}>
           <RadarChart data={radarData}>
             <PolarGrid stroke={colors.grid}/>
             <PolarAngleAxis dataKey="metric" tick={{fontSize:10,fill:colors.muted}}/>
@@ -200,7 +194,10 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
     </>
   );
 
-  const renderCharts = () => (
+  // ═══════════════════════════════════════════════════════════
+  // TAB: ANALYSIS — charts + table (merged)
+  // ═══════════════════════════════════════════════════════════
+  const renderAnalysis = () => (
     <>
       <Card style={{marginBottom:16}}>
         <SectionLabel>Cash Flow &amp; Net Income</SectionLabel>
@@ -220,9 +217,9 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
       </Card>
 
       <Card style={{marginBottom:16}}>
-        <SectionLabel>Equity Growth (Stacked)</SectionLabel>
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={equityGrowthChart} margin={{top:10,right:10,left:0,bottom:0}}>
+        <SectionLabel>Equity Growth</SectionLabel>
+        <ResponsiveContainer width="100%" height={240}>
+          <AreaChart data={equityChart} margin={{top:10,right:10,left:0,bottom:0}}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
             <XAxis dataKey="year" stroke={colors.muted} fontSize={10}/>
             <YAxis stroke={colors.muted} fontSize={10} tickFormatter={fmtK}/>
@@ -234,7 +231,7 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
         </ResponsiveContainer>
       </Card>
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:12,marginBottom:16}}>
         <Card>
           <SectionLabel>Year 1 Expenses</SectionLabel>
           <ResponsiveContainer width="100%" height={200}>
@@ -251,77 +248,63 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
           </div>
         </Card>
       </div>
+
+      {/* Year-by-Year Table — bottom of analysis */}
+      <Card style={{overflowX:'auto'}}>
+        <SectionLabel>Year-by-Year Comparison</SectionLabel>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:480}}>
+          <thead><tr style={{borderBottom:'1px solid var(--border-primary)'}}>
+            {['Yr','Prop Value','Equity','Cash Flow','Hold Total','Sell Value',show1031&&'1031'].filter(Boolean).map(h=>
+              <th key={h} style={{padding:'8px 4px',textAlign:'right',color:'var(--gold)',fontWeight:700,fontSize:9,textTransform:'uppercase',fontFamily:"'JetBrains Mono',monospace"}}>{h}</th>
+            )}
+          </tr></thead>
+          <tbody>{hold.yearlyData.map((d,i)=>(
+            <tr key={i} style={{borderBottom:'1px solid var(--border-primary)'}}>
+              <td style={{padding:'5px 4px',color:'var(--text-muted)'}}>{d.year}</td>
+              <td style={{padding:'5px 4px',textAlign:'right',color:'var(--text-secondary)'}}>{fmtK(d.propertyValue)}</td>
+              <td style={{padding:'5px 4px',textAlign:'right',color:'var(--accent)'}}>{fmtK(d.equity)}</td>
+              <td style={{padding:'5px 4px',textAlign:'right',color:d.netCashFlow>=0?'var(--green)':'var(--red)'}}>{fmtK(d.netCashFlow)}</td>
+              <td style={{padding:'5px 4px',textAlign:'right',color:'var(--accent)',fontWeight:600}}>{fmtK(d.equity+d.cumulativeCashFlow)}</td>
+              <td style={{padding:'5px 4px',textAlign:'right',color:'var(--blue)'}}>{fmtK(sell.yearlyData[i]?.investedValue)}</td>
+              {show1031&&<td style={{padding:'5px 4px',textAlign:'right',color:'var(--purple)'}}>{fmtK((exch.yearlyData[i]?.equity||0)+(exch.yearlyData[i]?.cumulativeCashFlow||0))}</td>}
+            </tr>
+          ))}</tbody>
+        </table>
+      </Card>
     </>
   );
 
-  const renderTable = () => (
-    <Card style={{overflowX:'auto'}}>
-      <SectionLabel>Year-by-Year</SectionLabel>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:500}}>
-        <thead><tr style={{borderBottom:'1px solid var(--border-primary)'}}>
-          {['Yr','Prop Value','Equity','Cash Flow','Hold Total','Sell Value',show1031&&'1031'].filter(Boolean).map(h=>
-            <th key={h} style={{padding:'8px 6px',textAlign:'right',color:'var(--gold)',fontWeight:700,fontSize:9,textTransform:'uppercase',fontFamily:"'JetBrains Mono',monospace"}}>{h}</th>
-          )}
-        </tr></thead>
-        <tbody>{hold.yearlyData.map((d,i)=>(
-          <tr key={i} style={{borderBottom:'1px solid var(--border-primary)'}}>
-            <td style={{padding:'6px',color:'var(--text-muted)'}}>{d.year}</td>
-            <td style={{padding:'6px',textAlign:'right',color:'var(--text-secondary)'}}>{fmtK(d.propertyValue)}</td>
-            <td style={{padding:'6px',textAlign:'right',color:'var(--accent)'}}>{fmtK(d.equity)}</td>
-            <td style={{padding:'6px',textAlign:'right',color:d.netCashFlow>=0?'var(--green)':'var(--red)'}}>{fmtK(d.netCashFlow)}</td>
-            <td style={{padding:'6px',textAlign:'right',color:'var(--accent)',fontWeight:600}}>{fmtK(d.equity+d.cumulativeCashFlow)}</td>
-            <td style={{padding:'6px',textAlign:'right',color:'var(--blue)'}}>{fmtK(sell.yearlyData[i]?.investedValue)}</td>
-            {show1031&&<td style={{padding:'6px',textAlign:'right',color:'var(--purple)'}}>{fmtK((exch.yearlyData[i]?.equity||0)+(exch.yearlyData[i]?.cumulativeCashFlow||0))}</td>}
-          </tr>
-        ))}</tbody>
-      </table>
-    </Card>
-  );
-
-  const renderSliders = () => (
-    <Card>
-      <SectionLabel>Sensitivity Sliders</SectionLabel>
-      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:20}}>Adjust &mdash; all charts update live.</p>
-      <Slider label="Vacancy Rate" min={0} max={100} step={1} value={sens.vacancyRate} displayValue={`${Math.round(sens.vacancyRate)}%`} onChange={e=>setSens({...sens,vacancyRate:e.target.value})}/>
-      <Slider label="Appreciation" min={-5} max={15} step={1} value={sens.appreciation} displayValue={`${Math.round(sens.appreciation)}%`} onChange={e=>setSens({...sens,appreciation:e.target.value})}/>
-      <Slider label="Alt. Return" min={0} max={15} step={1} value={sens.altReturn} displayValue={`${Math.round(sens.altReturn)}%`} onChange={e=>setSens({...sens,altReturn:e.target.value})}/>
-      <Slider label="Years to Hold" min={1} max={30} step={1} value={sens.yearsToHold} displayValue={`${sens.yearsToHold} yrs`} suffix=" yrs" onChange={e=>setSens({...sens,yearsToHold:e.target.value})}/>
-      {!isPro&&<div style={{marginTop:16,padding:12,borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.3)',fontSize:12,color:'var(--text-muted)',textAlign:'center'}}>
-        <strong style={{color:'var(--gold)'}}>&star; Pro</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.<br/>
-        <button onClick={onProClick} style={{marginTop:8,padding:'6px 16px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>Unlock Pro</button>
-      </div>}
-    </Card>
-  );
-
-  // ── PRO TABS ──
+  // ═══════════════════════════════════════════════════════════
+  // PRO TABS
+  // ═══════════════════════════════════════════════════════════
   const renderTax = () => (
     <Card>
       <SectionLabel>Tax Benefits Calculator</SectionLabel>
-      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:16}}>Compare straight-line depreciation vs. cost segregation study.</p>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
-        <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
-          <div style={{fontSize:11,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Straight-Line</div>
-          <div style={{fontSize:22,fontWeight:700,color:'var(--accent)'}}>{fmt(taxBenefits.annualStraightLine)}<span style={{fontSize:12,color:'var(--text-muted)'}}>/yr</span></div>
-          <div style={{fontSize:12,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalSLSavings10yr)}</div>
+      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:16}}>Straight-line depreciation vs. cost segregation study at your {(parseFloat(formData.taxBracket)*100).toFixed(0)}% bracket.</p>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+        <div style={{padding:14,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
+          <div style={{fontSize:10,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Straight-Line</div>
+          <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{fmt(taxBenefits.annualStraightLine)}<span style={{fontSize:11,color:'var(--text-muted)'}}>/yr</span></div>
+          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalSLSavings10yr)}</div>
         </div>
-        <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--gold-subtle)'}}>
-          <div style={{fontSize:11,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Cost Segregation</div>
-          <div style={{fontSize:22,fontWeight:700,color:'var(--gold)'}}>{fmt(taxBenefits.costSegYear1Bonus)}<span style={{fontSize:12,color:'var(--text-muted)'}}> yr1</span></div>
-          <div style={{fontSize:12,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalCSSavings10yr)}</div>
+        <div style={{padding:14,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--gold-subtle)'}}>
+          <div style={{fontSize:10,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:4}}>Cost Segregation</div>
+          <div style={{fontSize:20,fontWeight:700,color:'var(--gold)'}}>{fmt(taxBenefits.costSegYear1Bonus)}<span style={{fontSize:11,color:'var(--text-muted)'}}> yr1</span></div>
+          <div style={{fontSize:11,color:'var(--text-muted)',marginTop:4}}>10yr savings: {fmt(taxBenefits.totalCSSavings10yr)}</div>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={220}>
         <BarChart data={taxBenefits.yearlyData.slice(0,Math.min(sens.yearsToHold,10))} margin={{top:10,right:10,left:0,bottom:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
           <XAxis dataKey="year" stroke={colors.muted} fontSize={10}/>
           <YAxis stroke={colors.muted} fontSize={10} tickFormatter={fmtK}/>
           <Tooltip content={<ChartTooltip/>}/>
           <Legend wrapperStyle={{fontSize:11}}/>
-          <Bar dataKey="slTaxSavings" name="Straight-Line Savings" fill={colors.accent} radius={[3,3,0,0]}/>
-          <Bar dataKey="csTaxSavings" name="Cost Seg Savings" fill={colors.gold} radius={[3,3,0,0]}/>
+          <Bar dataKey="slTaxSavings" name="SL Savings" fill={colors.accent} radius={[3,3,0,0]}/>
+          <Bar dataKey="csTaxSavings" name="Cost Seg" fill={colors.gold} radius={[3,3,0,0]}/>
         </BarChart>
       </ResponsiveContainer>
-      <p style={{fontSize:11,color:'var(--text-faint)',marginTop:12}}>Depreciable basis: {fmt(taxBenefits.depreciableBasis)} (85% of purchase price). Consult a CPA for your specific situation.</p>
+      <p style={{fontSize:10,color:'var(--text-faint)',marginTop:10}}>Basis: {fmt(taxBenefits.depreciableBasis)} (85% of purchase price). Consult a CPA.</p>
     </Card>
   );
 
@@ -329,10 +312,10 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
     const results = mortScenarios.map(s => ({...s, calc:calculateMortgageScenario(s.principal, s.rate, s.term)}));
     return (
       <Card>
-        <SectionLabel>Mortgage Scenario Comparison</SectionLabel>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12,marginBottom:20}}>
+        <SectionLabel>Mortgage Comparison</SectionLabel>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:16}}>
           {results.map((s,i)=>(
-            <div key={i} style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
+            <div key={i} style={{padding:14,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
               <div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)',marginBottom:8}}>{s.label}</div>
               <InputField label="Principal" name="p" value={s.principal} onChange={e=>{const n=[...mortScenarios];n[i].principal=Number(e.target.value);setMortScenarios(n);}} type="number" prefix="$"/>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -341,7 +324,7 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
               </div>
               <div style={{borderTop:'1px solid var(--border-primary)',paddingTop:8,marginTop:8}}>
                 <div style={{fontSize:20,fontWeight:700,color:i===0?'var(--accent)':'var(--blue)'}}>{fmt(s.calc.monthlyPayment)}<span style={{fontSize:11,color:'var(--text-muted)'}}>/mo</span></div>
-                <div style={{fontSize:12,color:'var(--text-muted)'}}>Total interest: {fmtK(s.calc.totalInterest)}</div>
+                <div style={{fontSize:11,color:'var(--text-muted)'}}>Total interest: {fmtK(s.calc.totalInterest)}</div>
               </div>
             </div>
           ))}
@@ -358,25 +341,22 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
   const renderSnapshots = () => (
     <Card>
       <SectionLabel>What-If Snapshots</SectionLabel>
-      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:16}}>Save slider configurations to compare scenarios side by side.</p>
+      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:12}}>Save assumption sets to compare scenarios.</p>
       <div style={{display:'flex',gap:8,marginBottom:16}}>
         <input value={snapName} onChange={e=>setSnapName(e.target.value)} placeholder="Scenario name..." style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border-primary)',background:'var(--input-bg)',color:'var(--text-primary)',fontSize:13,outline:'none'}}/>
         <button onClick={saveSnapshot} disabled={!snapName.trim()} style={{padding:'8px 16px',borderRadius:8,border:'none',background:snapName.trim()?'var(--accent)':'var(--text-dim)',color:'#fff',fontSize:13,fontWeight:700,cursor:snapName.trim()?'pointer':'not-allowed'}}>Save</button>
       </div>
-      {snapshots.length===0&&<p style={{fontSize:13,color:'var(--text-faint)',textAlign:'center',padding:20}}>No snapshots yet. Adjust sliders and save a scenario.</p>}
+      {snapshots.length===0&&<p style={{fontSize:13,color:'var(--text-faint)',textAlign:'center',padding:16}}>No snapshots yet. Adjust sliders above and save.</p>}
       {snapshots.map((s,i)=>{
         const h=calculateHoldScenario({...formData,annualAppreciation:s.sens.appreciation/100,vacancyRate:s.sens.vacancyRate},s.sens.yearsToHold);
         const sv=calculateSellScenario({...formData,annualAppreciation:s.sens.appreciation/100,vacancyRate:s.sens.vacancyRate},s.sens.yearsToHold,s.sens.altReturn/100);
         return (
-          <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:12,borderRadius:8,border:'1px solid var(--border-primary)',marginBottom:8,flexWrap:'wrap',gap:8}}>
-            <div>
-              <div style={{fontSize:14,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div>
-              <div style={{fontSize:11,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% &middot; App {s.sens.appreciation}% &middot; Alt {s.sens.altReturn}% &middot; {s.sens.yearsToHold}yr</div>
-            </div>
-            <div style={{display:'flex',gap:12,alignItems:'center'}}>
-              <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:700,color:'var(--accent)'}}>{fmtK(h.totalWealth)}</div><div style={{fontSize:10,color:'var(--text-faint)'}}>Hold</div></div>
-              <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:700,color:'var(--blue)'}}>{fmtK(sv.totalWealthAtEnd)}</div><div style={{fontSize:10,color:'var(--text-faint)'}}>Sell</div></div>
-              <button onClick={()=>loadSnapshot(s)} style={{padding:'4px 10px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--accent)',fontSize:11,cursor:'pointer'}}>Load</button>
+          <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:10,borderRadius:8,border:'1px solid var(--border-primary)',marginBottom:8,flexWrap:'wrap',gap:6}}>
+            <div><div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div><div style={{fontSize:10,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% &middot; App {s.sens.appreciation}% &middot; Alt {s.sens.altReturn}% &middot; {s.sens.yearsToHold}yr</div></div>
+            <div style={{display:'flex',gap:10,alignItems:'center'}}>
+              <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--accent)'}}>{fmtK(h.totalWealth)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Hold</div></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--blue)'}}>{fmtK(sv.totalWealthAtEnd)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Sell</div></div>
+              <button onClick={()=>setSens({...s.sens})} style={{padding:'3px 8px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--accent)',fontSize:10,cursor:'pointer'}}>Load</button>
             </div>
           </div>
         );
@@ -387,39 +367,63 @@ Write a 3-4 sentence plain-English investment summary. Be specific with numbers.
   const renderAI = () => (
     <Card>
       <SectionLabel>AI Investment Summary</SectionLabel>
-      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-        <SelectField label="" name="provider" value={aiProvider} onChange={e=>setAiProvider(e.target.value)} options={[{value:'claude',label:'Claude (Anthropic)'},{value:'gemini',label:'Gemini (Free)'}]}/>
-        <button onClick={generateAI} disabled={aiLoading} style={{padding:'10px 20px',borderRadius:8,border:'none',background:aiLoading?'var(--text-dim)':'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,cursor:aiLoading?'wait':'pointer',alignSelf:'flex-end',marginBottom:16}}>
+      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'flex-end',flexWrap:'wrap'}}>
+        <div style={{minWidth:180}}><SelectField label="" name="provider" value={aiProvider} onChange={e=>setAiProvider(e.target.value)} options={[{value:'claude',label:'Claude (Anthropic)'},{value:'gemini',label:'Gemini (Free)'}]}/></div>
+        <button onClick={generateAI} disabled={aiLoading} style={{padding:'10px 20px',borderRadius:8,border:'none',background:aiLoading?'var(--text-dim)':'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,cursor:aiLoading?'wait':'pointer',marginBottom:16}}>
           {aiLoading?'Generating...':'Generate Summary'}
         </button>
       </div>
       {aiSummary ? (
         <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-accent)',fontSize:14,color:'var(--text-secondary)',lineHeight:1.8}}>{aiSummary}</div>
       ) : (
-        <div style={{padding:24,textAlign:'center',color:'var(--text-faint)',fontSize:13}}>Click "Generate Summary" for an AI-powered analysis of your investment scenarios.</div>
+        <div style={{padding:20,textAlign:'center',color:'var(--text-faint)',fontSize:13}}>Click "Generate Summary" for an AI analysis of your scenarios.</div>
       )}
     </Card>
   );
 
+  // ── Tab config ──
+  const tabs = [
+    {id:'overview',label:'Overview'},
+    {id:'analysis',label:'Analysis'},
+    ...(isPro ? [
+      {id:'tax',label:'Tax'},
+      {id:'mortgage',label:'Mortgage'},
+      {id:'snapshots',label:'What-If'},
+      {id:'ai',label:'AI'},
+    ] : []),
+  ];
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════
   return (
-    <div style={{maxWidth:1200,margin:'0 auto',padding:'16px 12px'}}>
-      {/* Header bar */}
+    <div style={{maxWidth:1100,margin:'0 auto',padding:'16px 12px'}}>
+      {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
-        <div style={{fontSize:13,color:'var(--text-muted)'}}>{formData.propertyType} in {formData.location}</div>
-        <div style={{display:'flex',gap:8}}>
-          {!isPro&&<button onClick={onProClick} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'var(--gold)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>&star; Pro</button>}
-          <button onClick={onEditAssumptions} style={{padding:'6px 14px',borderRadius:8,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>&larr; Edit</button>
+        <div style={{fontSize:13,color:'var(--text-muted)'}}>{formData.propertyType} &middot; {formData.location}</div>
+        <div style={{display:'flex',gap:6}}>
+          {!isPro&&<button onClick={onProClick} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>&star; Pro</button>}
+          <button onClick={onEditAssumptions} style={{padding:'5px 12px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:11,cursor:'pointer'}}>&larr; Edit</button>
         </div>
       </div>
 
-      {/* Tab navigation */}
+      {/* Assumptions Bar — always visible */}
+      <AssumptionsBar/>
+
+      {/* Tabs */}
       <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab}/>
 
-      {/* Tab content */}
+      {/* Pro upsell for non-pro users */}
+      {!isPro && (activeTab==='overview'||activeTab==='analysis') && (
+        <div style={{marginBottom:12,padding:'8px 14px',borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+          <span style={{fontSize:12,color:'var(--text-muted)'}}><strong style={{color:'var(--gold)'}}>&star; Pro</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.</span>
+          <button onClick={onProClick} style={{padding:'4px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>Unlock</button>
+        </div>
+      )}
+
+      {/* Content */}
       {activeTab==='overview'&&renderOverview()}
-      {activeTab==='charts'&&renderCharts()}
-      {activeTab==='table'&&renderTable()}
-      {activeTab==='sliders'&&renderSliders()}
+      {activeTab==='analysis'&&renderAnalysis()}
       {activeTab==='tax'&&isPro&&renderTax()}
       {activeTab==='mortgage'&&isPro&&renderMortgage()}
       {activeTab==='snapshots'&&isPro&&renderSnapshots()}
