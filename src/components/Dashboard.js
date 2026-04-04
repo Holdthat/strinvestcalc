@@ -159,7 +159,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       } else {
         setAiSummary(data.error || 'Unable to generate summary.');
       }
-    } catch(err) { setAiSummary('AI summary unavailable. Check your connection and try again.'); }
+    } catch(err) { setAiSummary('AI error: ' + (err.message || 'Check your connection and try again.')); }
     setAiLoading(false);
   };
 
