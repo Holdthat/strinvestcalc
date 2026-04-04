@@ -43,7 +43,7 @@ export const Card = ({children, style={}}) => (
 
 export const SectionLabel = ({children, tip}) => (
   <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:16}}>
-    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>{children}</span>
+    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>{children}</span>
     {tip && <Tooltip_ text={tip}><span/></Tooltip_>}
   </div>
 );
@@ -57,7 +57,7 @@ export const TabBar = ({tabs, active, onChange}) => (
   <div style={{display:'flex',gap:4,overflowX:'auto',WebkitOverflowScrolling:'touch',padding:'4px 0',marginBottom:16}}>
     {tabs.map(t => (
       <button key={t.id} onClick={()=>onChange(t.id)} style={{
-        padding:'9px 16px',borderRadius:6,border:'none',fontSize:14,fontWeight:active===t.id?700:500,
+        padding:'10px 18px',borderRadius:6,border:'none',fontSize:15,fontWeight:active===t.id?700:500,
         cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,
         background:active===t.id?'var(--accent)':'transparent',
         color:active===t.id?'#fff':'var(--text-faint)',transition:'all 0.15s',
@@ -105,16 +105,16 @@ export const Slider = ({label,min,max,step,value,onChange,displayValue,suffix='%
   return (
     <div style={{marginBottom:20,padding:16,background:'var(--bg-card)',borderRadius:8,border:'1px solid var(--border-primary)'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <span style={{display:'flex',alignItems:'center',gap:2,fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>
+        <span style={{display:'flex',alignItems:'center',gap:4,fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>
           {label}{tip&&<Tooltip_ text={tip}><span/></Tooltip_>}
         </span>
-        <span style={{fontSize:18,fontWeight:700,color:'var(--accent)',fontFamily:"'JetBrains Mono',monospace"}}>{displayValue}</span>
+        <span style={{fontSize:22,fontWeight:700,color:'var(--accent)',fontFamily:"'JetBrains Mono',monospace"}}>{displayValue}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e=>{const raw=Number(e.target.value);const rounded=Math.round(raw/step)*step;onChange({target:{value:rounded}});}}
-        style={{width:'100%',height:6,borderRadius:3,background:`linear-gradient(to right,var(--accent) 0%,var(--accent) ${pct}%,var(--border-primary) ${pct}%,var(--border-primary) 100%)`}}
+        style={{width:'100%',height:8,borderRadius:4,background:`linear-gradient(to right,var(--accent) 0%,var(--accent) ${pct}%,var(--border-primary) ${pct}%,var(--border-primary) 100%)`}}
       />
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-faint)',marginTop:6}}>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--text-faint)',marginTop:6}}>
         <span>{min}{suffix}</span><span>{max}{suffix}</span>
       </div>
     </div>
@@ -157,7 +157,7 @@ export const ThemeToggle = ({dark,setDark}) => (
     width:36,height:36,borderRadius:8,border:'1px solid var(--border-primary)',
     background:'rgba(255,255,255,0.06)',color:'var(--text-primary)',fontSize:18,
     cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-  }}>{dark?'\u2600':'\u263E'}</button>
+  }}>{dark?'☀':'☾'}</button>
 );
 
 // ═══════════════════════════════════════════════════════════
@@ -165,14 +165,13 @@ export const ThemeToggle = ({dark,setDark}) => (
 // ═══════════════════════════════════════════════════════════
 export const NavBar = ({dark,setDark,onNav}) => (
   <nav style={{
-    borderBottom:'1px solid var(--border-primary)',padding:'12px 16px',
+    borderBottom:'1px solid var(--border-primary)',padding:'12px 20px',
     display:'flex',alignItems:'center',justifyContent:'space-between',
     background:dark?'linear-gradient(135deg,#0B1120,#151D2E)':'linear-gradient(135deg,#FFFFFF,#F5F5F5)',
     position:'sticky',top:0,zIndex:100,
   }}>
-    <div style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',minWidth:0}} onClick={()=>onNav&&onNav('landing')}>
-      {/* Full VHG logo scaled for nav */}
-      <svg viewBox="0 0 320 170" width="80" height="42" style={{flexShrink:0}}>
+    <div style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer',minWidth:0}} onClick={()=>onNav&&onNav('landing')}>
+      <svg viewBox="0 0 320 170" width="90" height="48" style={{flexShrink:0}}>
         <path d="M85 28 L110 12 L128 22 L155 4 L178 18 L195 10 L235 28" fill="none" stroke="#10B981" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
         <line x1="80" y1="28" x2="240" y2="28" stroke="#C8962E" strokeWidth="0.8"/>
         <text x="160" y="62" textAnchor="middle" fill={dark?'#FFFFFF':'#1A1A1A'} fontFamily="Georgia,serif" fontSize="34" fontWeight="700" letterSpacing="0.08em">VACATION</text>
@@ -182,15 +181,20 @@ export const NavBar = ({dark,setDark,onNav}) => (
         <text x="165" y="138" textAnchor="middle" fill="#C8962E" fontFamily="Georgia,serif" fontSize="32" fontStyle="italic">group</text>
       </svg>
       <div style={{minWidth:0}}>
-        <span style={{fontSize:18,fontWeight:700,color:'var(--text-primary)'}}>STR<span style={{color:'var(--gold)'}}>Invest</span>Calc</span>
-        <div style={{fontSize:10,color:'var(--text-faint)',fontFamily:"'JetBrains Mono',monospace"}}>v{APP_VERSION}</div>
+        <div style={{fontSize:26,fontWeight:800,color:'var(--text-primary)',letterSpacing:'-0.02em',lineHeight:1.1}}>
+          STR<span style={{color:'var(--gold)'}}>Invest</span>Calc
+        </div>
+        <div style={{fontSize:12,color:'var(--text-muted)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.06em',marginTop:2}}>
+          SHORT TERM RENTAL · INVESTMENT ANALYZER
+        </div>
       </div>
     </div>
-    <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+    <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
       {onNav&&<>
-        <button onClick={()=>onNav('calculator')} style={{background:'none',border:'none',color:'var(--accent)',fontSize:13,fontWeight:700,cursor:'pointer',padding:'6px 10px'}}>Calculator</button>
-        <button onClick={()=>onNav('pro')} style={{background:'none',border:'none',color:'var(--gold)',fontSize:13,fontWeight:700,cursor:'pointer',padding:'6px 10px'}}>Standard | Pro</button>
+        <button onClick={()=>onNav('calculator')} style={{background:'none',border:'none',color:'var(--accent)',fontSize:14,fontWeight:700,cursor:'pointer',padding:'6px 12px'}}>Calculator</button>
+        <button onClick={()=>onNav('pro')} style={{background:'none',border:'none',color:'var(--gold)',fontSize:14,fontWeight:700,cursor:'pointer',padding:'6px 12px'}}>Standard / Pro</button>
       </>}
+      <span style={{fontSize:10,color:'var(--text-faint)',fontFamily:"'JetBrains Mono',monospace"}}>v{APP_VERSION}</span>
       <ThemeToggle dark={dark} setDark={setDark}/>
     </div>
   </nav>
@@ -212,7 +216,7 @@ export const ProGate = ({onUnlock,onClose}) => {
         <button onClick={onClose} style={{position:'absolute',top:12,right:16,background:'none',border:'none',color:'var(--text-muted)',fontSize:22,cursor:'pointer'}}>×</button>
         {!submitted ? (<>
           <div style={{textAlign:'center',marginBottom:24}}>
-            <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>★ Unlock Pro</div>
+            <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>Unlock Pro</div>
             <p style={{fontSize:15,color:'var(--text-muted)',lineHeight:1.6}}>Pro is available at no charge to Vacation Home Group clients. Share your info to unlock all features instantly.</p>
           </div>
           <InputField label="Full Name" name="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Jane Smith"/>
@@ -222,7 +226,7 @@ export const ProGate = ({onUnlock,onClose}) => {
           <p style={{fontSize:12,color:'var(--text-faint)',textAlign:'center',marginTop:12}}>We do not sell or share your information with third parties.</p>
         </>) : (
           <div style={{textAlign:'center',padding:'40px 0'}}>
-            <div style={{fontSize:48,marginBottom:16}}>★</div>
+            <div style={{fontSize:48,marginBottom:16}}>✓</div>
             <div style={{fontSize:22,fontWeight:700,color:'var(--accent)'}}>Pro Unlocked!</div>
             <p style={{fontSize:15,color:'var(--text-muted)',marginTop:8}}>Welcome, {name}. All features are now active.</p>
           </div>

@@ -90,9 +90,9 @@ export default function Questionnaire({onComplete, initialData}) {
           <SelectField label="Invest proceeds where?" name="alternativeInvestment" value={form.alternativeInvestment} onChange={hc} tip="If you sell, where would the after-tax proceeds go?" options={[{value:'stock-market',label:'Stock Market (S&P 500)'},{value:'bonds',label:'Bonds / Fixed Income'},{value:'another-property',label:'Another Property (non-1031)'},{value:'mixed',label:'Mixed Portfolio'}]}/>
           <InputField label="Expected Return" name="alternativeReturn" value={form.alternativeReturn} onChange={hc} type="number" suffix="%" tip="Annual return on your alternative investment. S&P 500 averages ~10% historically."/>
           <SectionLabel>Exit Strategy Interest</SectionLabel>
-          <SelectField label="What are you considering?" name="exitStrategy" value={form.exitStrategy} onChange={hc} options={[{value:'undecided',label:"Not sure yet \u— show me the data"},{value:'hold',label:'Leaning toward holding'},{value:'sell',label:'Leaning toward selling'},{value:'1031',label:'Interested in 1031 Exchange'}]}/>
+          <SelectField label="What are you considering?" name="exitStrategy" value={form.exitStrategy} onChange={hc} options={[{value:'undecided',label:"Not sure yet — show me the data"},{value:'hold',label:'Leaning toward holding'},{value:'sell',label:'Leaning toward selling'},{value:'1031',label:'Interested in 1031 Exchange'}]}/>
           {form.exitStrategy==='1031'&&(<>
-            <SectionLabel>1031 Exchange \u— Replacement Property</SectionLabel>
+            <SectionLabel>1031 Exchange — Replacement Property</SectionLabel>
             <InputField label="Replacement Property Value" name="replacementValue" value={form.replacementValue} onChange={hc} type="number" prefix="$"/>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
               <InputField label="Expected Annual Rent" name="replacementRent" value={form.replacementRent} onChange={hc} type="number" prefix="$"/>
@@ -104,7 +104,7 @@ export default function Questionnaire({onComplete, initialData}) {
         {step===4&&(<>
           <SectionLabel>Review Your Inputs</SectionLabel>
           <div style={{fontSize:14,color:'var(--text-secondary)',lineHeight:2}}>
-            <p><strong style={{color:'var(--gold)'}}>Property:</strong> {form.propertyType} in {form.location||'\u—'}</p>
+            <p><strong style={{color:'var(--gold)'}}>Property:</strong> {form.propertyType} in {form.location||'—'}</p>
             <p><strong style={{color:'var(--gold)'}}>Purchase Price:</strong> {fmt(form.purchasePrice)}</p>
             <p><strong style={{color:'var(--gold)'}}>Current Value:</strong> {fmt(form.currentValue)}</p>
             <p><strong style={{color:'var(--gold)'}}>Annual Rent:</strong> {fmt(form.annualRent)}</p>

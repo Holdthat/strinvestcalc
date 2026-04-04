@@ -13,7 +13,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const colors = chartColors(dark);
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [slidersOpen, setSlidersOpen] = useState(false);
+  const [slidersOpen, setSlidersOpen] = useState(true);
 
   // Sensitivity
   const [sens, setSens] = useState({
@@ -46,12 +46,12 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const [settingsSaved, setSettingsSaved] = useState(false);
 
   const AI_PRESETS = [
-    {value:'investor-brief',label:'\uD83D\uDCBC Investor Brief',desc:'Concise analysis for decision-makers. Numbers-heavy, bottom-line focused.'},
-    {value:'partner-explainer',label:'\uD83E\uDD1D Partner Explainer',desc:'Plain English for a spouse or partner. Avoids jargon, explains trade-offs clearly.'},
-    {value:'cpa-memo',label:'\uD83D\uDCCB CPA Memo',desc:'Tax-focused summary for your accountant. Depreciation, capital gains, 1031 implications.'},
-    {value:'risk-assessment',label:'\u26A0\uFE0F Risk Assessment',desc:'What could go wrong? Stress-tests assumptions and flags vulnerabilities.'},
-    {value:'market-letter',label:'\uD83D\uDCE8 Client Market Letter',desc:'Polished summary suitable for sharing with clients or in a newsletter.'},
-    {value:'quick-take',label:'\u26A1 Quick Take',desc:'One paragraph. The fastest possible read.'},
+    {value:'investor-brief',label:'💼 Investor Brief',desc:'Concise analysis for decision-makers. Numbers-heavy, bottom-line focused.'},
+    {value:'partner-explainer',label:'🤝 Partner Explainer',desc:'Plain English for a spouse or partner. Avoids jargon, explains trade-offs clearly.'},
+    {value:'cpa-memo',label:'📋 CPA Memo',desc:'Tax-focused summary for your accountant. Depreciation, capital gains, 1031 implications.'},
+    {value:'risk-assessment',label:'⚠️ Risk Assessment',desc:'What could go wrong? Stress-tests assumptions and flags vulnerabilities.'},
+    {value:'market-letter',label:'📨 Client Market Letter',desc:'Polished summary suitable for sharing with clients or in a newsletter.'},
+    {value:'quick-take',label:'⚡ Quick Take',desc:'One paragraph. The fastest possible read.'},
   ];
   const AI_TONES = [{value:'professional',label:'Professional'},{value:'conversational',label:'Conversational'},{value:'technical',label:'Technical'},{value:'encouraging',label:'Encouraging'}];
   const AI_LENGTHS = [{value:'short',label:'Short (2-3 sentences)',tokens:200},{value:'medium',label:'Medium (1 paragraph)',tokens:400},{value:'detailed',label:'Detailed (2-3 paragraphs)',tokens:800}];
@@ -169,13 +169,13 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       {/* Collapsed: summary row + toggle */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,cursor:'pointer'}} onClick={()=>setSlidersOpen(!slidersOpen)}>
         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>ASSUMPTIONS</span>
-          <span style={{fontSize:12,color:'var(--text-muted)'}}>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>ASSUMPTIONS</span>
+          <span style={{fontSize:14,color:'var(--text-muted)'}}>
             Vac {Math.round(sens.vacancyRate)}% · App {Math.round(sens.appreciation)}% · Alt {Math.round(sens.altReturn)}% · {sens.yearsToHold}yr
           </span>
         </div>
-        <button style={{background:'none',border:'1px solid var(--border-primary)',borderRadius:6,padding:'4px 10px',color:'var(--accent)',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0}}>
-          {slidersOpen ? 'Collapse \u25B2' : 'Tune \u25BC'}
+        <button style={{background:'none',border:'1px solid var(--border-primary)',borderRadius:6,padding:'5px 12px',color:'var(--accent)',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0}}>
+          {slidersOpen ? 'Collapse ▲' : 'Tune ▼'}
         </button>
       </div>
       {/* Expanded: sliders */}
@@ -196,10 +196,10 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const renderOverview = () => (
     <>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:20}}>
-        <Card style={{padding:'16px 18px'}}><SectionLabel tip="Property equity plus cumulative net cash flow over your hold period.">Hold Total</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--accent)'}}>{fmtK(hold.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>{sens.yearsToHold}yr equity+cash</p></Card>
-        <Card style={{padding:'16px 18px'}}><SectionLabel tip="After-tax sale proceeds invested at your chosen alternative return rate.">Sell & Invest</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>At {sens.altReturn}% return</p></Card>
-        {show1031&&<Card style={{padding:'16px 18px'}}><SectionLabel tip="Tax-deferred exchange into replacement property. Defers capital gains and depreciation recapture.">1031 Exchange</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>Deferred: {fmtK(exch.taxDeferred)}</p></Card>}
-        <Card style={{padding:'16px 18px',background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel tip="Whichever scenario produces the highest total wealth wins.">Recommendation</SectionLabel><div style={{fontSize:20,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
+        <Card style={{padding:'16px 18px'}}><SectionLabel tip="Property equity plus cumulative net cash flow over your hold period.">Hold Total</SectionLabel><div style={{fontSize:28,fontWeight:700,color:'var(--accent)'}}>{fmtK(hold.totalWealth)}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>{sens.yearsToHold}yr equity+cash</p></Card>
+        <Card style={{padding:'16px 18px'}}><SectionLabel tip="After-tax sale proceeds invested at your chosen alternative return rate.">Sell & Invest</SectionLabel><div style={{fontSize:28,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>At {sens.altReturn}% return</p></Card>
+        {show1031&&<Card style={{padding:'16px 18px'}}><SectionLabel tip="Tax-deferred exchange into replacement property. Defers capital gains and depreciation recapture.">1031 Exchange</SectionLabel><div style={{fontSize:28,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>Deferred: {fmtK(exch.taxDeferred)}</p></Card>}
+        <Card style={{padding:'16px 18px',background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel tip="Whichever scenario produces the highest total wealth wins.">Recommendation</SectionLabel><div style={{fontSize:24,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
       </div>
 
       <Card style={{marginBottom:16}}>
@@ -293,10 +293,10 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       {/* Year-by-Year Table — bottom of analysis */}
       <Card style={{overflowX:'auto'}}>
         <SectionLabel>Year-by-Year Comparison</SectionLabel>
-        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,minWidth:480}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:500}}>
           <thead><tr style={{borderBottom:'1px solid var(--border-primary)'}}>
             {['Yr','Prop Value','Equity','Cash Flow','Hold Total','Sell Value',show1031&&'1031'].filter(Boolean).map(h=>
-              <th key={h} style={{padding:'8px 4px',textAlign:'right',color:'var(--gold)',fontWeight:700,fontSize:9,textTransform:'uppercase',fontFamily:"'JetBrains Mono',monospace"}}>{h}</th>
+              <th key={h} style={{padding:'8px 4px',textAlign:'right',color:'var(--gold)',fontWeight:700,fontSize:11,textTransform:'uppercase',fontFamily:"'JetBrains Mono',monospace"}}>{h}</th>
             )}
           </tr></thead>
           <tbody>{hold.yearlyData.map((d,i)=>(
@@ -568,10 +568,10 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     <div style={{maxWidth:1100,margin:'0 auto',padding:'16px 12px'}}>
       {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
-        <div style={{fontSize:13,color:'var(--text-muted)'}}>{formData.propertyType} · {formData.location}</div>
+        <div style={{fontSize:16,fontWeight:600,color:'var(--text-muted)'}}>{formData.propertyType} · {formData.location}</div>
         <div style={{display:'flex',gap:6}}>
-          {!isPro&&<button onClick={onProClick} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>★ Pro</button>}
-          <button onClick={onEditAssumptions} style={{padding:'5px 12px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:11,cursor:'pointer'}}>← Edit</button>
+          {!isPro&&<button onClick={onProClick} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>PRO</button>}
+          <button onClick={onEditAssumptions} style={{padding:'7px 16px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:13,cursor:'pointer'}}>← Edit</button>
         </div>
       </div>
 
@@ -583,9 +583,9 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
 
       {/* Pro upsell for non-pro users */}
       {!isPro && (activeTab==='overview'||activeTab==='analysis') && (
-        <div style={{marginBottom:12,padding:'8px 14px',borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
-          <span style={{fontSize:12,color:'var(--text-muted)'}}><strong style={{color:'var(--gold)'}}>★ Pro</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.</span>
-          <button onClick={onProClick} style={{padding:'4px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>Unlock</button>
+        <div style={{marginBottom:12,padding:'10px 16px',borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+          <span style={{fontSize:14,color:'var(--text-muted)'}}><strong style={{color:'var(--gold)'}}>PRO</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.</span>
+          <button onClick={onProClick} style={{padding:'6px 14px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>Unlock</button>
         </div>
       )}
 
