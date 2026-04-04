@@ -27,9 +27,15 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const [snapshots, setSnapshots] = useState([]);
   const [snapName, setSnapName] = useState('');
 
-  // Mortgage Scenarios (Pro)
+  // Mortgage Scenarios (Pro) — sync with formData on mount and after Edit
+  const getMortRate = () => {
+    const raw = parseFloat(formData.mortgageRate) || 0;
+    // formData.mortgageRate is normalized (e.g., 0.03 for 3%)
+    const pct = raw < 1 ? Math.round(raw * 10000) / 100 : raw;
+    return pct || 6.5;
+  };
   const [mortScenarios, setMortScenarios] = useState([
-    {label:'Current',principal:parseFloat(formData.mortgageBalance)||0,rate:Math.round(parseFloat(formData.mortgageRate)*10000)/100||6.5,term:parseInt(formData.mortgageYearsRemaining)||30},
+    {label:'Current',principal:parseFloat(formData.mortgageBalance)||0,rate:getMortRate(),term:parseInt(formData.mortgageYearsRemaining)||30},
     {label:'Refi Option',principal:parseFloat(formData.mortgageBalance)||0,rate:5.5,term:30},
   ]);
 
@@ -190,6 +196,15 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     </div>
   );
 
+  // Calculated cap rate: NOI / Current Value
+  const calcCapRate = useMemo(() => {
+    const yr1 = hold.yearlyData[0];
+    if (!yr1) return 0;
+    const noi = yr1.effectiveRent - yr1.opExpenses - yr1.maintenance;
+    const cv = parseFloat(formData.currentValue) || 1;
+    return (noi / cv * 100);
+  }, [hold, formData]);
+
   // ═══════════════════════════════════════════════════════════
   // TAB: OVERVIEW — metric cards + wealth chart + radar
   // ═══════════════════════════════════════════════════════════
@@ -200,6 +215,13 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         <Card style={{padding:'16px 18px'}}><SectionLabel tip="After-tax sale proceeds invested at your chosen alternative return rate.">Sell & Invest</SectionLabel><div style={{fontSize:28,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>At {sens.altReturn}% return</p></Card>
         {show1031&&<Card style={{padding:'16px 18px'}}><SectionLabel tip="Tax-deferred exchange into replacement property. Defers capital gains and depreciation recapture.">1031 Exchange</SectionLabel><div style={{fontSize:28,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>Deferred: {fmtK(exch.taxDeferred)}</p></Card>}
         <Card style={{padding:'16px 18px',background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel tip="Whichever scenario produces the highest total wealth wins.">Recommendation</SectionLabel><div style={{fontSize:24,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
+      </div>
+
+      {/* Secondary metrics row */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:20}}>
+        <Card style={{padding:'14px 16px'}}><SectionLabel tip="Net Operating Income divided by property value. Measures investment yield independent of financing. Higher is better.">Cap Rate</SectionLabel><div style={{fontSize:22,fontWeight:700,color:'var(--gold)'}}>{calcCapRate.toFixed(1)}%</div><p style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>calculated from inputs</p></Card>
+        <Card style={{padding:'14px 16px'}}><SectionLabel tip="Year 1 net cash flow: rental income minus expenses, maintenance, and debt service.">Cash Flow /Yr</SectionLabel><div style={{fontSize:22,fontWeight:700,color:hold.yearlyData[0]?.netCashFlow>=0?'var(--accent)':'var(--red)'}}>{fmtK(hold.yearlyData[0]?.netCashFlow||0)}</div><p style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>year 1 net</p></Card>
+        <Card style={{padding:'14px 16px'}}><SectionLabel tip="Your total selling costs as a percentage of sale price. Includes agent commissions and closing costs.">Selling Costs</SectionLabel><div style={{fontSize:22,fontWeight:700,color:'var(--text-secondary)'}}>{parseFloat(formData.sellingCostsPct)||7.5}%</div><p style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>{fmtK(sell.sellingCosts)}</p></Card>
       </div>
 
       <Card style={{marginBottom:16}}>
@@ -335,7 +357,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         </div>
       </div>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={taxBenefits.yearlyData.slice(0,Math.min(sens.yearsToHold,10))} margin={{top:10,right:10,left:0,bottom:0}}>
+        <BarChart data={taxBenefits.yearlyData.slice(0,sens.yearsToHold)} margin={{top:10,right:10,left:0,bottom:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
           <XAxis dataKey="year" stroke={colors.muted} fontSize={10}/>
           <YAxis stroke={colors.muted} fontSize={10} tickFormatter={fmtK}/>

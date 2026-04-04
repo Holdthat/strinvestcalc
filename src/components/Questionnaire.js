@@ -85,7 +85,7 @@ export default function Questionnaire({onComplete, initialData, dark}) {
           <SectionLabel>Market Assumptions</SectionLabel>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <InputField label="Appreciation" name="annualAppreciation" value={form.annualAppreciation} onChange={hc} type="number" suffix="%" tip="Expected annual property value growth. US average is ~3-4%."/>
-            <InputField label="Cap Rate" name="capRate" value={form.capRate} onChange={hc} type="number" suffix="%" tip="Net operating income ÷ property value. Measures investment yield. Optional."/>
+            <InputField label="Cap Rate" name="capRate" value={form.capRate} onChange={hc} type="number" suffix="%" tip="Optional reference value. The dashboard calculates your actual cap rate from your inputs. Enter a market average here for comparison if you have one."/>
           </div>
           <SectionLabel>Alternative Investment</SectionLabel>
           <SelectField label="Invest proceeds where?" name="alternativeInvestment" value={form.alternativeInvestment} onChange={hc} tip="If you sell, where would the after-tax proceeds go?" options={[{value:'stock-market',label:'Stock Market (S&P 500)'},{value:'bonds',label:'Bonds / Fixed Income'},{value:'another-property',label:'Another Property (non-1031)'},{value:'mixed',label:'Mixed Portfolio'}]}/>
