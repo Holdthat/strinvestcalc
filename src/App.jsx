@@ -37,6 +37,7 @@ export default function App() {
   const calcRef = useRef(null);
   const featRef = useRef(null);
   const proRef = useRef(null);
+  const docsRef = useRef(null);
 
   // Navigation handler
   const handleNav = (target) => {
@@ -44,6 +45,7 @@ export default function App() {
     else if (target === 'calculator') { setView('questionnaire'); }
     else if (target === 'features') { if(view!=='landing') setView('landing'); setTimeout(()=>featRef.current?.scrollIntoView({behavior:'smooth'}),100); }
     else if (target === 'pro') { if(view!=='landing') setView('landing'); setTimeout(()=>proRef.current?.scrollIntoView({behavior:'smooth'}),100); }
+    else if (target === 'resources') { if(view!=='landing') setView('landing'); setTimeout(()=>docsRef.current?.scrollIntoView({behavior:'smooth'}),100); }
   };
 
   // Run analysis
@@ -83,12 +85,13 @@ export default function App() {
           onProClick={() => setShowProGate(true)}
           featRef={featRef}
           proRef={proRef}
+          docsRef={docsRef}
         />
       )}
 
       {view === 'questionnaire' && (
         <div ref={calcRef}>
-          <Questionnaire onComplete={handleAnalyze} initialData={formData}/>
+          <Questionnaire onComplete={handleAnalyze} initialData={formData} dark={dark}/>
         </div>
       )}
 
