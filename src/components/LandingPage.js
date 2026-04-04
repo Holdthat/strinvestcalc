@@ -89,6 +89,29 @@ export default function LandingPage({onOpenCalc, onProClick, isPro, featRef, pro
           </div>
         </Card>
       </div>
+
+      {/* DOCUMENTATION DOWNLOADS */}
+      <div style={{maxWidth:720,margin:'0 auto',padding:'48px 20px'}}>
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <SectionLabel>Free Downloads</SectionLabel>
+          <h2 style={{fontSize:'clamp(22px,4vw,28px)',fontWeight:700,color:'var(--text-primary)',marginTop:8}}>User Manual and Glossary</h2>
+          <p style={{fontSize:14,color:'var(--text-muted)',marginTop:8}}>Everything you need to get the most out of STRInvestCalc.</p>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:20}}>
+          <Card>
+            <div style={{fontSize:32,marginBottom:12}}>📖</div>
+            <h3 style={{fontSize:17,fontWeight:700,color:'var(--text-primary)',marginBottom:8}}>User Manual</h3>
+            <p style={{fontSize:14,color:'var(--text-muted)',lineHeight:1.6,marginBottom:16}}>Step-by-step guide covering every section: questionnaire fields, dashboard tabs, sensitivity sliders, all chart types, Pro features, and AI summary presets.</p>
+            <a href="/docs/STRInvestCalc_User_Manual.docx" download style={{display:'inline-block',padding:'10px 20px',borderRadius:8,background:'var(--accent)',color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Download Manual</a>
+          </Card>
+          <Card>
+            <div style={{fontSize:32,marginBottom:12}}>📋</div>
+            <h3 style={{fontSize:17,fontWeight:700,color:'var(--text-primary)',marginBottom:8}}>Abbreviations and Glossary</h3>
+            <p style={{fontSize:14,color:'var(--text-muted)',lineHeight:1.6,marginBottom:16}}>Plain-English definitions for every term: 1031 Exchange, Cap Rate, Cost Segregation, Depreciation Recapture, NOI, and 20+ more, organized alphabetically.</p>
+            <a href="/docs/STRInvestCalc_Glossary.docx" download style={{display:'inline-block',padding:'10px 20px',borderRadius:8,background:'var(--accent)',color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Download Glossary</a>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

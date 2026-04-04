@@ -15,11 +15,11 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const [activeTab, setActiveTab] = useState('overview');
   const [slidersOpen, setSlidersOpen] = useState(true);
 
-  // Sensitivity
+  // Sensitivity — formData values are already normalized (0.03 = 3%, 0.07 = 7%)
   const [sens, setSens] = useState({
     vacancyRate: parseFloat(formData.vacancyRate)||10,
-    appreciation: parseFloat(formData.annualAppreciation)||3,
-    altReturn: parseFloat(formData.alternativeReturn)||7,
+    appreciation: Math.round((parseFloat(formData.annualAppreciation)||0.03)*100),
+    altReturn: Math.round((parseFloat(formData.alternativeReturn)||0.07)*100),
     yearsToHold: 10,
   });
 
@@ -559,10 +559,27 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
           ))}
         </div>
       </Card>
+
+      {/* Documentation Downloads */}
+      <Card style={{marginTop:16}}>
+        <SectionLabel>Documentation</SectionLabel>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:16}}>
+          <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
+            <div style={{fontSize:28,marginBottom:8}}>📖</div>
+            <h3 style={{fontSize:15,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>User Manual</h3>
+            <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.5,marginBottom:12}}>Complete guide to every feature, tab, chart, and slider in the tool.</p>
+            <a href="/docs/STRInvestCalc_User_Manual.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
+          </div>
+          <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
+            <div style={{fontSize:28,marginBottom:8}}>📋</div>
+            <h3 style={{fontSize:15,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>Glossary</h3>
+            <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.5,marginBottom:12}}>24 terms defined: 1031 Exchange, Cap Rate, Cost Segregation, NOI, and more.</p>
+            <a href="/docs/STRInvestCalc_Glossary.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
+          </div>
+        </div>
+      </Card>
     </div>
   );
-
-  // ── Admin Settings (hidden, ?admin=true only) ──
   const renderSettings = () => {
     const saveSettings = () => {
       try{localStorage.setItem('vhg-gemini-key',geminiKey);}catch(_e){}

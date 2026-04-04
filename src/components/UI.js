@@ -232,29 +232,96 @@ export const NavBar = ({dark,setDark,onNav}) => (
 // PRO GATE
 // ═══════════════════════════════════════════════════════════
 export const ProGate = ({onUnlock,onClose}) => {
+  const [step,setStep] = useState('info');
   const [name,setName] = useState('');
   const [email,setEmail] = useState('');
   const [phone,setPhone] = useState('');
-  const [submitted,setSubmitted] = useState(false);
-  const handleSubmit = () => {if(name&&email){setSubmitted(true);setTimeout(()=>{onUnlock({name,email,phone});},1500);}};
+  const [code,setCode] = useState('');
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState('');
+
+  const sendCode = async () => {
+    if(!name||!email) return;
+    setLoading(true); setError('');
+    try {
+      const resp = await fetch('/api/send-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email,name}),
+      });
+      const data = await resp.json();
+      if(resp.ok) { setStep('verify'); }
+      else { setError(data.error||'Failed to send code. Try again.'); }
+    } catch(err) { setError('Network error. Please check your connection.'); }
+    setLoading(false);
+  };
+
+  const verifyCode = async () => {
+    if(!code) return;
+    setLoading(true); setError('');
+    try {
+      const resp = await fetch('/api/verify-code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email,code}),
+      });
+      const data = await resp.json();
+      if(resp.ok && data.success) { 
+        setStep('done');
+        setTimeout(()=>{onUnlock({name:data.name||name,email,phone});},1500);
+      } else { setError(data.error||'Invalid code. Try again.'); }
+    } catch(err) { setError('Network error. Please check your connection.'); }
+    setLoading(false);
+  };
+
+  const closeBtn = {position:'absolute',top:12,right:16,background:'none',border:'none',color:'var(--text-muted)',fontSize:22,cursor:'pointer'};
+  const modalBg = {position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20};
+  const modalBox = {background:'var(--bg-card)',border:'1px solid var(--border-primary)',borderRadius:16,padding:32,maxWidth:440,width:'100%',position:'relative'};
+  const btnStyle = (active) => ({width:'100%',padding:'14px 24px',borderRadius:8,border:'none',background:active?'var(--gold)':'var(--text-dim)',color:'#fff',fontSize:17,fontWeight:700,cursor:active?'pointer':'not-allowed',marginTop:8});
+  const btnVerify = (active) => ({width:'100%',padding:'14px 24px',borderRadius:8,border:'none',background:active?'var(--accent)':'var(--text-dim)',color:'#fff',fontSize:17,fontWeight:700,cursor:active?'pointer':'not-allowed',marginTop:16});
 
   return (
-    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{background:'var(--bg-card)',border:'1px solid var(--border-primary)',borderRadius:16,padding:32,maxWidth:440,width:'100%',position:'relative'}}>
-        <button onClick={onClose} style={{position:'absolute',top:12,right:16,background:'none',border:'none',color:'var(--text-muted)',fontSize:22,cursor:'pointer'}}>×</button>
-        {!submitted ? (<>
+    <div style={modalBg}>
+      <div style={modalBox}>
+        <button onClick={onClose} style={closeBtn}>x</button>
+
+        {step==='info' && (<>
           <div style={{textAlign:'center',marginBottom:24}}>
             <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>Unlock Pro</div>
-            <p style={{fontSize:15,color:'var(--text-muted)',lineHeight:1.6}}>Pro is available at no charge to Vacation Home Group clients. Share your info to unlock all features instantly.</p>
+            <p style={{fontSize:15,color:'var(--text-muted)',lineHeight:1.6}}>Pro is available at no charge to Vacation Home Group clients. Enter your info and we will send a verification code to your email.</p>
           </div>
           <InputField label="Full Name" name="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Jane Smith"/>
           <InputField label="Email" name="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jane@example.com" type="email"/>
           <InputField label="Phone (optional)" name="phone" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="603-555-1234" type="tel"/>
-          <button onClick={handleSubmit} disabled={!name||!email} style={{width:'100%',padding:'14px 24px',borderRadius:8,border:'none',background:name&&email?'var(--gold)':'var(--text-dim)',color:'#fff',fontSize:17,fontWeight:700,cursor:name&&email?'pointer':'not-allowed',marginTop:8}}>Unlock Pro Access →</button>
+          {error && <p style={{color:'var(--red)',fontSize:13,marginBottom:8,textAlign:'center'}}>{error}</p>}
+          <button onClick={sendCode} disabled={!name||!email||loading} style={btnStyle(name&&email&&!loading)}>
+            {loading ? 'Sending...' : 'Send Verification Code'}
+          </button>
           <p style={{fontSize:12,color:'var(--text-faint)',textAlign:'center',marginTop:12}}>We do not sell or share your information with third parties.</p>
-        </>) : (
+        </>)}
+
+        {step==='verify' && (<>
+          <div style={{textAlign:'center',marginBottom:24}}>
+            <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>Enter Code</div>
+            <p style={{fontSize:15,color:'var(--text-muted)',lineHeight:1.6}}>We sent a 6-digit code to <strong style={{color:'var(--text-primary)'}}>{email}</strong>. Check your inbox and spam folder.</p>
+          </div>
+          <div style={{maxWidth:280,margin:'0 auto'}}>
+            <input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000" maxLength={6}
+              style={{width:'100%',padding:'16px',fontSize:32,fontWeight:700,textAlign:'center',letterSpacing:12,fontFamily:"'JetBrains Mono',monospace",background:'var(--input-bg)',border:'1px solid var(--border-primary)',borderRadius:10,color:'var(--text-primary)',outline:'none'}}
+            />
+          </div>
+          {error && <p style={{color:'var(--red)',fontSize:13,marginTop:8,textAlign:'center'}}>{error}</p>}
+          <button onClick={verifyCode} disabled={code.length!==6||loading} style={btnVerify(code.length===6&&!loading)}>
+            {loading ? 'Verifying...' : 'Verify and Unlock'}
+          </button>
+          <div style={{textAlign:'center',marginTop:12}}>
+            <button onClick={()=>{setStep('info');setError('');setCode('');}} style={{background:'none',border:'none',color:'var(--text-muted)',fontSize:13,cursor:'pointer',textDecoration:'underline'}}>Back</button>
+            <span style={{color:'var(--text-dim)',margin:'0 8px'}}>|</span>
+            <button onClick={sendCode} disabled={loading} style={{background:'none',border:'none',color:'var(--accent)',fontSize:13,cursor:'pointer',textDecoration:'underline'}}>{loading?'Sending...':'Resend Code'}</button>
+          </div>
+        </>)}
+
+        {step==='done' && (
           <div style={{textAlign:'center',padding:'40px 0'}}>
-            <div style={{fontSize:48,marginBottom:16}}>✓</div>
+            <div style={{fontSize:48,marginBottom:16}}>\u2713</div>
             <div style={{fontSize:22,fontWeight:700,color:'var(--accent)'}}>Pro Unlocked!</div>
             <p style={{fontSize:15,color:'var(--text-muted)',marginTop:8}}>Welcome, {name}. All features are now active.</p>
           </div>
@@ -263,6 +330,7 @@ export const ProGate = ({onUnlock,onClose}) => {
     </div>
   );
 };
+
 
 // ═══════════════════════════════════════════════════════════
 // VHG FOOTER
