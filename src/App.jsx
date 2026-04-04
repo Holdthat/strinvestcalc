@@ -57,6 +57,7 @@ export default function App() {
       annualAppreciation: (parseFloat(data.annualAppreciation)||3)/100,
       alternativeReturn: (parseFloat(data.alternativeReturn)||7)/100,
       taxBracket: (parseFloat(data.taxBracket)||32)/100,
+      sellingCostsPct: parseFloat(data.sellingCostsPct)||7.5,
     };
     setFormData(n);
     setHoldResult(calculateHoldScenario(n, 10));
