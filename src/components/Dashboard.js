@@ -41,6 +41,10 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const [aiTone, setAiTone] = useState('professional');
   const [aiLength, setAiLength] = useState('medium');
 
+  // API Key Settings
+  const [geminiKey, setGeminiKey] = useState(() => {try{return localStorage.getItem('vhg-gemini-key')||'';}catch(_e){return '';}});
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
   const AI_PRESETS = [
     {value:'investor-brief',label:'\uD83D\uDCBC Investor Brief',desc:'Concise analysis for decision-makers. Numbers-heavy, bottom-line focused.'},
     {value:'partner-explainer',label:'\uD83E\uDD1D Partner Explainer',desc:'Plain English for a spouse or partner. Avoids jargon, explains trade-offs clearly.'},
@@ -139,7 +143,19 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         const data = await resp.json();
         setAiSummary(data.content?.[0]?.text || 'Unable to generate summary.');
       } else {
-        setAiSummary('Gemini integration requires an API key. Configure in settings to enable free AI summaries.');
+        // Gemini
+        const key = geminiKey || (()=>{try{return localStorage.getItem('vhg-gemini-key')||'';}catch(_e){return '';}})();
+        if (!key) {
+          setAiSummary('No Gemini API key found. Go to the Settings tab to add your free key from aistudio.google.com/apikey');
+        } else {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:lengthCfg?.tokens||400}}),
+          });
+          const data = await resp.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          setAiSummary(text || 'Gemini returned no content. Check your API key in Settings.');
+        }
       }
     } catch(err) { setAiSummary('AI summary unavailable. Check your connection and try again.'); }
     setAiLoading(false);
@@ -155,7 +171,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
           <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)'}}>ASSUMPTIONS</span>
           <span style={{fontSize:12,color:'var(--text-muted)'}}>
-            Vac {Math.round(sens.vacancyRate)}% &middot; App {Math.round(sens.appreciation)}% &middot; Alt {Math.round(sens.altReturn)}% &middot; {sens.yearsToHold}yr
+            Vac {Math.round(sens.vacancyRate)}% · App {Math.round(sens.appreciation)}% · Alt {Math.round(sens.altReturn)}% · {sens.yearsToHold}yr
           </span>
         </div>
         <button style={{background:'none',border:'1px solid var(--border-primary)',borderRadius:6,padding:'4px 10px',color:'var(--accent)',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0}}>
@@ -181,7 +197,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     <>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:10,marginBottom:20}}>
         <Card style={{padding:'16px 18px'}}><SectionLabel tip="Property equity plus cumulative net cash flow over your hold period.">Hold Total</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--accent)'}}>{fmtK(hold.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>{sens.yearsToHold}yr equity+cash</p></Card>
-        <Card style={{padding:'16px 18px'}}><SectionLabel tip="After-tax sale proceeds invested at your chosen alternative return rate.">Sell &amp; Invest</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>At {sens.altReturn}% return</p></Card>
+        <Card style={{padding:'16px 18px'}}><SectionLabel tip="After-tax sale proceeds invested at your chosen alternative return rate.">Sell & Invest</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--blue)'}}>{fmtK(sell.totalWealthAtEnd)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>At {sens.altReturn}% return</p></Card>
         {show1031&&<Card style={{padding:'16px 18px'}}><SectionLabel tip="Tax-deferred exchange into replacement property. Defers capital gains and depreciation recapture.">1031 Exchange</SectionLabel><div style={{fontSize:24,fontWeight:700,color:'var(--purple)'}}>{fmtK(exch.totalWealth)}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>Deferred: {fmtK(exch.taxDeferred)}</p></Card>}
         <Card style={{padding:'16px 18px',background:'var(--bg-subtle)',border:'1px solid var(--border-accent)'}}><SectionLabel tip="Whichever scenario produces the highest total wealth wins.">Recommendation</SectionLabel><div style={{fontSize:20,fontWeight:700,color:rec.color}}>{rec.text}</div><p style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>+{fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}</p></Card>
       </div>
@@ -225,7 +241,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const renderAnalysis = () => (
     <>
       <Card style={{marginBottom:16}}>
-        <SectionLabel>Cash Flow &amp; Net Income</SectionLabel>
+        <SectionLabel>Cash Flow & Net Income</SectionLabel>
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={cashFlowChart} margin={{top:10,right:10,left:0,bottom:0}}>
             <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
@@ -267,8 +283,8 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
           <SectionLabel>Sale Proceeds</SectionLabel>
           <div style={{fontSize:13,lineHeight:2.2,color:'var(--text-secondary)'}}>
             <div style={{display:'flex',justifyContent:'space-between'}}><span>Gross Equity</span><span>{fmt(sell.grossProceeds)}</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',color:'var(--red)'}}><span>&minus; Selling Costs</span><span>{fmt(sell.sellingCosts)}</span></div>
-            <div style={{display:'flex',justifyContent:'space-between',color:'var(--red)'}}><span>&minus; Capital Gains</span><span>{fmt(sell.capitalGainsTax)}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',color:'var(--red)'}}><span>− Selling Costs</span><span>{fmt(sell.sellingCosts)}</span></div>
+            <div style={{display:'flex',justifyContent:'space-between',color:'var(--red)'}}><span>− Capital Gains</span><span>{fmt(sell.capitalGainsTax)}</span></div>
             <div style={{display:'flex',justifyContent:'space-between',borderTop:'1px solid var(--border-primary)',paddingTop:8,marginTop:8,fontWeight:700,color:'var(--accent)'}}><span>Net to Invest</span><span>{fmt(sell.netProceeds)}</span></div>
           </div>
         </Card>
@@ -377,7 +393,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
         const sv=calculateSellScenario({...formData,annualAppreciation:s.sens.appreciation/100,vacancyRate:s.sens.vacancyRate},s.sens.yearsToHold,s.sens.altReturn/100);
         return (
           <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:10,borderRadius:8,border:'1px solid var(--border-primary)',marginBottom:8,flexWrap:'wrap',gap:6}}>
-            <div><div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div><div style={{fontSize:10,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% &middot; App {s.sens.appreciation}% &middot; Alt {s.sens.altReturn}% &middot; {s.sens.yearsToHold}yr</div></div>
+            <div><div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div><div style={{fontSize:10,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% · App {s.sens.appreciation}% · Alt {s.sens.altReturn}% · {s.sens.yearsToHold}yr</div></div>
             <div style={{display:'flex',gap:10,alignItems:'center'}}>
               <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--accent)'}}>{fmtK(h.totalWealth)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Hold</div></div>
               <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--blue)'}}>{fmtK(sv.totalWealthAtEnd)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Sell</div></div>
@@ -485,17 +501,64 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     </div>
   );
 
+  // ── Settings tab ──
+  const renderSettings = () => {
+    const saveSettings = () => {
+      try{localStorage.setItem('vhg-gemini-key',geminiKey);}catch(_e){}
+      setSettingsSaved(true);
+      setTimeout(()=>setSettingsSaved(false),2000);
+    };
+    return (
+      <Card>
+        <SectionLabel>Settings</SectionLabel>
+        <p style={{fontSize:14,color:'var(--text-muted)',marginBottom:20,lineHeight:1.6}}>
+          Configure API keys for AI features. Claude (Anthropic) is built in and works automatically. To use Gemini, add your Google AI API key below.
+        </p>
+
+        <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)',marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:'var(--green)'}}/>
+            <span style={{fontSize:14,fontWeight:700,color:'var(--text-primary)'}}>Claude (Anthropic)</span>
+          </div>
+          <p style={{fontSize:13,color:'var(--text-muted)'}}>Built-in. No API key needed. Powered by Claude Sonnet.</p>
+        </div>
+
+        <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)',marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:geminiKey?'var(--green)':'var(--text-dim)'}}/>
+            <span style={{fontSize:14,fontWeight:700,color:'var(--text-primary)'}}>Gemini (Google AI)</span>
+            <span style={{fontSize:11,color:'var(--text-faint)',background:'var(--bg-card)',padding:'2px 6px',borderRadius:4}}>Free tier available</span>
+          </div>
+          <p style={{fontSize:13,color:'var(--text-muted)',marginBottom:12}}>Get a free API key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{color:'var(--gold)',textDecoration:'none'}}>aistudio.google.com/apikey</a></p>
+          <InputField label="Gemini API Key" name="geminiKey" value={geminiKey} onChange={e=>setGeminiKey(e.target.value)} placeholder="AIzaSy..." type="password" tip="Your key is stored locally in your browser. It is never sent to our servers."/>
+        </div>
+
+        <button onClick={saveSettings} style={{padding:'12px 24px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer'}}>
+          {settingsSaved ? '✓ Saved' : 'Save Settings'}
+        </button>
+
+        <div style={{marginTop:24,padding:14,borderRadius:8,border:'1px solid var(--border-primary)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',marginBottom:8,fontFamily:"'JetBrains Mono',monospace",textTransform:'uppercase',letterSpacing:'0.1em'}}>Privacy</div>
+          <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.6}}>
+            API keys are stored in your browser's localStorage only. They are sent directly to the respective AI provider when you generate a summary and are never transmitted to Vacation Home Group servers. All investment calculations run entirely in your browser.
+          </p>
+        </div>
+      </Card>
+    );
+  };
+
   // ── Tab config ──
   const tabs = [
     {id:'overview',label:'Overview'},
     {id:'analysis',label:'Analysis'},
-    {id:'how',label:'How It Works'},
     ...(isPro ? [
       {id:'tax',label:'Tax'},
       {id:'mortgage',label:'Mortgage'},
       {id:'snapshots',label:'What-If'},
       {id:'ai',label:'AI Summary'},
+      {id:'settings',label:'Settings'},
     ] : []),
+    {id:'how',label:'How It Works'},
   ];
 
   // ═══════════════════════════════════════════════════════════
@@ -505,10 +568,10 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     <div style={{maxWidth:1100,margin:'0 auto',padding:'16px 12px'}}>
       {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
-        <div style={{fontSize:13,color:'var(--text-muted)'}}>{formData.propertyType} &middot; {formData.location}</div>
+        <div style={{fontSize:13,color:'var(--text-muted)'}}>{formData.propertyType} · {formData.location}</div>
         <div style={{display:'flex',gap:6}}>
-          {!isPro&&<button onClick={onProClick} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>&star; Pro</button>}
-          <button onClick={onEditAssumptions} style={{padding:'5px 12px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:11,cursor:'pointer'}}>&larr; Edit</button>
+          {!isPro&&<button onClick={onProClick} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>★ Pro</button>}
+          <button onClick={onEditAssumptions} style={{padding:'5px 12px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:11,cursor:'pointer'}}>← Edit</button>
         </div>
       </div>
 
@@ -521,7 +584,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       {/* Pro upsell for non-pro users */}
       {!isPro && (activeTab==='overview'||activeTab==='analysis') && (
         <div style={{marginBottom:12,padding:'8px 14px',borderRadius:8,background:'var(--gold-subtle)',border:'1px solid rgba(154,120,32,0.2)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
-          <span style={{fontSize:12,color:'var(--text-muted)'}}><strong style={{color:'var(--gold)'}}>&star; Pro</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.</span>
+          <span style={{fontSize:12,color:'var(--text-muted)'}}><strong style={{color:'var(--gold)'}}>★ Pro</strong> adds Tax Benefits, Mortgage Comparison, What-If Snapshots, and AI Summary.</span>
           <button onClick={onProClick} style={{padding:'4px 12px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>Unlock</button>
         </div>
       )}
@@ -534,6 +597,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       {activeTab==='mortgage'&&isPro&&renderMortgage()}
       {activeTab==='snapshots'&&isPro&&renderSnapshots()}
       {activeTab==='ai'&&isPro&&renderAI()}
+      {activeTab==='settings'&&isPro&&renderSettings()}
     </div>
   );
 }

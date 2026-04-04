@@ -31,11 +31,11 @@ export default function LandingPage({onOpenCalc, onProClick, isPro, featRef, pro
     <div>
       {/* HERO */}
       <div style={{textAlign:'center',padding:'60px 20px 48px',maxWidth:720,margin:'0 auto'}}>
-        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)',marginBottom:16}}>Vacation Home Group &middot; STR Investment Tool</div>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--gold)',marginBottom:16}}>Vacation Home Group · STR Investment Tool</div>
         <h1 style={{fontSize:'clamp(28px,5vw,42px)',fontWeight:800,lineHeight:1.15,color:'var(--text-primary)',marginBottom:20,fontFamily:"'Playfair Display',Georgia,serif"}}>Should you hold, sell, or 1031 exchange your vacation rental?</h1>
         <p style={{fontSize:16,color:'var(--text-muted)',lineHeight:1.7,maxWidth:560,margin:'0 auto 28px'}}>Model cash flow, equity, and returns across three scenarios. Real numbers before you make a decision.</p>
         <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-          <button onClick={onOpenCalc} style={{padding:'14px 28px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer'}}>Open Calculator &rarr;</button>
+          <button onClick={onOpenCalc} style={{padding:'14px 28px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer'}}>Open Calculator →</button>
           <button onClick={()=>featRef.current?.scrollIntoView({behavior:'smooth'})} style={{padding:'14px 28px',borderRadius:8,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:15,cursor:'pointer'}}>See Features</button>
         </div>
         <div style={{display:'flex',justifyContent:'center',gap:32,marginTop:40,flexWrap:'wrap'}}>
@@ -71,21 +71,21 @@ export default function LandingPage({onOpenCalc, onProClick, isPro, featRef, pro
         <div style={{textAlign:'center',marginBottom:24}}><SectionLabel>Pricing</SectionLabel><h2 style={{fontSize:'clamp(22px,4vw,28px)',fontWeight:700,color:'var(--text-primary)',marginTop:8}}>Standard vs Pro</h2><p style={{fontSize:14,color:'var(--text-muted)',marginTop:8}}>Pro is available at <strong>no charge</strong> to Vacation Home Group clients.</p></div>
         <Card>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-            <thead><tr style={{borderBottom:'2px solid var(--border-primary)'}}><th style={{textAlign:'left',padding:'10px 6px',color:'var(--text-primary)'}}>Feature</th><th style={{textAlign:'center',padding:'10px 6px',color:'var(--text-primary)',width:70}}>Standard</th><th style={{textAlign:'center',padding:'10px 6px',color:'var(--gold)',fontWeight:700,width:70}}>&star; Pro</th></tr></thead>
+            <thead><tr style={{borderBottom:'2px solid var(--border-primary)'}}><th style={{textAlign:'left',padding:'10px 6px',color:'var(--text-primary)'}}>Feature</th><th style={{textAlign:'center',padding:'10px 6px',color:'var(--text-primary)',width:70}}>Standard</th><th style={{textAlign:'center',padding:'10px 6px',color:'var(--gold)',fontWeight:700,width:70}}>★ Pro</th></tr></thead>
             <tbody>{proFeatures.map(([name,desc,std,pro],i)=>{
               const isHeader = std===null;
               return (
                 <tr key={i} style={{borderBottom:isHeader?'none':'1px solid var(--border-primary)'}}>
                   <td style={{padding:'8px 6px',color:isHeader?'var(--gold)':'var(--text-secondary)',fontWeight:isHeader?700:400,fontSize:isHeader?11:13,...(isHeader?{letterSpacing:'0.1em',textTransform:'uppercase',paddingTop:16}:{})}}>{name}</td>
-                  {!isHeader&&<><td style={{textAlign:'center',padding:'8px 6px',color:std?'var(--green)':'var(--text-dim)'}}>{std?'\u2713':'\u2014'}</td><td style={{textAlign:'center',padding:'8px 6px',color:pro?'var(--green)':'var(--text-dim)'}}>{pro?'\u2713':'\u2014'}</td></>}
+                  {!isHeader&&<><td style={{textAlign:'center',padding:'8px 6px',color:std?'var(--green)':'var(--text-dim)'}}>{std?'\u2713':'\u—'}</td><td style={{textAlign:'center',padding:'8px 6px',color:pro?'var(--green)':'var(--text-dim)'}}>{pro?'\u2713':'\u—'}</td></>}
                   {isHeader&&<td colSpan={2}/>}
                 </tr>
               );
             })}</tbody>
           </table>
           <div style={{textAlign:'center',marginTop:20}}>
-            {isPro?<div style={{color:'var(--accent)',fontWeight:700,fontSize:14}}>&star; Pro Active</div>
-            :<button onClick={onProClick} style={{padding:'12px 28px',borderRadius:8,border:'none',background:'var(--gold)',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer'}}>Unlock Pro Access &rarr;</button>}
+            {isPro?<div style={{color:'var(--accent)',fontWeight:700,fontSize:14}}>★ Pro Active</div>
+            :<button onClick={onProClick} style={{padding:'12px 28px',borderRadius:8,border:'none',background:'var(--gold)',color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer'}}>Unlock Pro Access →</button>}
           </div>
         </Card>
       </div>

@@ -209,20 +209,20 @@ export const ProGate = ({onUnlock,onClose}) => {
   return (
     <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.7)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
       <div style={{background:'var(--bg-card)',border:'1px solid var(--border-primary)',borderRadius:16,padding:32,maxWidth:440,width:'100%',position:'relative'}}>
-        <button onClick={onClose} style={{position:'absolute',top:12,right:16,background:'none',border:'none',color:'var(--text-muted)',fontSize:22,cursor:'pointer'}}>&times;</button>
+        <button onClick={onClose} style={{position:'absolute',top:12,right:16,background:'none',border:'none',color:'var(--text-muted)',fontSize:22,cursor:'pointer'}}>×</button>
         {!submitted ? (<>
           <div style={{textAlign:'center',marginBottom:24}}>
-            <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>&star; Unlock Pro</div>
+            <div style={{fontSize:26,fontWeight:700,color:'var(--gold)',marginBottom:4}}>★ Unlock Pro</div>
             <p style={{fontSize:15,color:'var(--text-muted)',lineHeight:1.6}}>Pro is available at no charge to Vacation Home Group clients. Share your info to unlock all features instantly.</p>
           </div>
           <InputField label="Full Name" name="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Jane Smith"/>
           <InputField label="Email" name="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jane@example.com" type="email"/>
           <InputField label="Phone (optional)" name="phone" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="603-555-1234" type="tel"/>
-          <button onClick={handleSubmit} disabled={!name||!email} style={{width:'100%',padding:'14px 24px',borderRadius:8,border:'none',background:name&&email?'var(--gold)':'var(--text-dim)',color:'#fff',fontSize:17,fontWeight:700,cursor:name&&email?'pointer':'not-allowed',marginTop:8}}>Unlock Pro Access &rarr;</button>
+          <button onClick={handleSubmit} disabled={!name||!email} style={{width:'100%',padding:'14px 24px',borderRadius:8,border:'none',background:name&&email?'var(--gold)':'var(--text-dim)',color:'#fff',fontSize:17,fontWeight:700,cursor:name&&email?'pointer':'not-allowed',marginTop:8}}>Unlock Pro Access →</button>
           <p style={{fontSize:12,color:'var(--text-faint)',textAlign:'center',marginTop:12}}>We do not sell or share your information with third parties.</p>
         </>) : (
           <div style={{textAlign:'center',padding:'40px 0'}}>
-            <div style={{fontSize:48,marginBottom:16}}>&star;</div>
+            <div style={{fontSize:48,marginBottom:16}}>★</div>
             <div style={{fontSize:22,fontWeight:700,color:'var(--accent)'}}>Pro Unlocked!</div>
             <p style={{fontSize:15,color:'var(--text-muted)',marginTop:8}}>Welcome, {name}. All features are now active.</p>
           </div>
@@ -247,31 +247,31 @@ export const VHGFooter = ({dark}) => (
     <div style={{display:'flex',justifyContent:'center',gap:60,marginBottom:20,flexWrap:'wrap'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:700,color:'var(--text-primary)'}}>Joe Mori</div>
-        <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>REALTOR&reg; &middot; Vacation Home Specialist</div>
+        <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>REALTOR® · Vacation Home Specialist</div>
         <div style={{fontSize:15,color:'var(--text-muted)'}}>
           <a href="tel:6039017777" style={{color:'var(--text-primary)',textDecoration:'none'}}>603-901-7777</a>
-          <span style={{margin:'0 4px'}}>&middot;</span>
+          <span style={{margin:'0 4px'}}>·</span>
           <a href="mailto:joemori@vacationhome.group" style={{color:'var(--gold)',textDecoration:'none'}}>joemori@vacationhome.group</a>
         </div>
       </div>
       <div style={{textAlign:'center'}}>
         <div style={{fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:700,color:'var(--text-primary)'}}>Dino Amato</div>
-        <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>REALTOR&reg; &middot; Vacation Home Specialist</div>
+        <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>REALTOR® · Vacation Home Specialist</div>
         <div style={{fontSize:15,color:'var(--text-muted)'}}>
           <a href="tel:6032751191" style={{color:'var(--text-primary)',textDecoration:'none'}}>603-275-1191</a>
-          <span style={{margin:'0 4px'}}>&middot;</span>
+          <span style={{margin:'0 4px'}}>·</span>
           <a href="mailto:dinoamato@vacationhome.group" style={{color:'var(--gold)',textDecoration:'none'}}>dinoamato@vacationhome.group</a>
         </div>
       </div>
     </div>
     <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:16}}>
       <a href="https://www.vacationhomegroup.net" style={{color:'var(--gold)',textDecoration:'none',fontWeight:600}}>vacationhomegroup.net</a>
-      <span style={{margin:'0 6px'}}>&middot;</span>
+      <span style={{margin:'0 6px'}}>·</span>
       <a href="https://www.vacationhome.group" style={{color:'var(--gold)',textDecoration:'none',fontWeight:600}}>vacationhome.group</a>
-      <span style={{margin:'0 6px'}}>&middot;</span>
+      <span style={{margin:'0 6px'}}>·</span>
       <span>Office: <a href="tel:8554500442" style={{color:'var(--text-primary)',textDecoration:'none'}}>855-450-0442</a></span>
     </div>
-    <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.8,maxWidth:580,margin:'0 auto 10px'}}>Joe Mori &amp; Dino Amato, Real Broker NH. Each office is independently owned and operated.</p>
+    <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.8,maxWidth:580,margin:'0 auto 10px'}}>Joe Mori & Dino Amato, Real Broker NH. Each office is independently owned and operated.</p>
     <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.8,maxWidth:580,margin:'0 auto 10px'}}>Projections are estimates based on user-provided inputs. This tool does not constitute financial or investment advice. Consult a qualified real estate professional before making investment decisions.</p>
     <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.8,maxWidth:580,margin:'0 auto'}}>By using this platform, you consent to the collection of your email address and preferences for the purpose of delivering personalized market analysis. We do not sell or share your information with third parties.</p>
   </footer>

@@ -44,55 +44,55 @@ export default function Questionnaire({onComplete, initialData}) {
 
       <Card>
         {step===1&&(<>
-          <SectionLabel>Property &amp; Portfolio</SectionLabel>
-          <SelectField label="Property Type" name="propertyType" value={form.propertyType} onChange={hc} options={[{value:'single-family',label:'Single Family'},{value:'condo',label:'Condo / Townhome'},{value:'multi-family',label:'Multi-Family'},{value:'cabin',label:'Cabin / Vacation Home'}]}/>
-          <InputField label="Location (City, State)" name="location" value={form.location} onChange={hc} placeholder="e.g. Lincoln, NH" error={errors.location}/>
+          <SectionLabel>Property & Portfolio</SectionLabel>
+          <SelectField label="Property Type" name="propertyType" value={form.propertyType} onChange={hc} tip="Affects default assumptions for maintenance and insurance." options={[{value:'single-family',label:'Single Family'},{value:'condo',label:'Condo / Townhome'},{value:'multi-family',label:'Multi-Family'},{value:'cabin',label:'Cabin / Vacation Home'}]}/>
+          <InputField label="Location" name="location" value={form.location} onChange={hc} placeholder="e.g. Lincoln, NH" error={errors.location} tip="City and state where the property is located."/>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <InputField label="Purchase Price" name="purchasePrice" value={form.purchasePrice} onChange={hc} type="number" prefix="$" error={errors.purchasePrice}/>
-            <InputField label="Current Market Value" name="currentValue" value={form.currentValue} onChange={hc} type="number" prefix="$" error={errors.currentValue}/>
+            <InputField label="Purchase Price" name="purchasePrice" value={form.purchasePrice} onChange={hc} type="number" prefix="$" error={errors.purchasePrice} tip="What you originally paid for the property."/>
+            <InputField label="Current Value" name="currentValue" value={form.currentValue} onChange={hc} type="number" prefix="$" error={errors.currentValue} tip="Today's estimated market value. Check Zillow, Redfin, or a recent appraisal."/>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <InputField label="Years Owned" name="yearsOwned" value={form.yearsOwned} onChange={hc} type="number" suffix="yrs"/>
-            <InputField label="Annual Gross Rent" name="annualRent" value={form.annualRent} onChange={hc} type="number" prefix="$" error={errors.annualRent}/>
+            <InputField label="Years Owned" name="yearsOwned" value={form.yearsOwned} onChange={hc} type="number" suffix="yrs" tip="How long you've held the property. Affects depreciation recapture on sale."/>
+            <InputField label="Annual Gross Rent" name="annualRent" value={form.annualRent} onChange={hc} type="number" prefix="$" error={errors.annualRent} tip="Total rental income per year before expenses and vacancy."/>
           </div>
-          <SelectField label="Management Style" name="managementStyle" value={form.managementStyle} onChange={hc} options={[{value:'self-managed',label:'Self-Managed'},{value:'property-manager',label:'Property Manager (20-25%)'},{value:'hybrid',label:'Hybrid'}]}/>
+          <SelectField label="Management Style" name="managementStyle" value={form.managementStyle} onChange={hc} tip="Self-managed saves PM fees (20-25%) but costs your time." options={[{value:'self-managed',label:'Self-Managed'},{value:'property-manager',label:'Property Manager (20-25%)'},{value:'hybrid',label:'Hybrid'}]}/>
         </>)}
 
         {step===2&&(<>
           <SectionLabel>Financial Snapshot</SectionLabel>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <InputField label="Annual Operating Expenses" name="annualExpenses" value={form.annualExpenses} onChange={hc} type="number" prefix="$" error={errors.annualExpenses}/>
-            <InputField label="Vacancy Rate" name="vacancyRate" value={form.vacancyRate} onChange={hc} type="number" suffix="%"/>
+            <InputField label="Annual Expenses" name="annualExpenses" value={form.annualExpenses} onChange={hc} type="number" prefix="$" error={errors.annualExpenses} tip="Total operating costs: insurance, taxes, utilities, cleaning, supplies, repairs, PM fees."/>
+            <InputField label="Vacancy Rate" name="vacancyRate" value={form.vacancyRate} onChange={hc} type="number" suffix="%" tip="Percent of the year the property sits empty. STR average is 25-40%."/>
           </div>
           <SectionLabel>Mortgage Details</SectionLabel>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <InputField label="Mortgage Balance" name="mortgageBalance" value={form.mortgageBalance} onChange={hc} type="number" prefix="$"/>
-            <InputField label="Interest Rate" name="mortgageRate" value={form.mortgageRate} onChange={hc} type="number" suffix="%"/>
+            <InputField label="Mortgage Balance" name="mortgageBalance" value={form.mortgageBalance} onChange={hc} type="number" prefix="$" tip="Current outstanding loan balance. Check your latest statement."/>
+            <InputField label="Interest Rate" name="mortgageRate" value={form.mortgageRate} onChange={hc} type="number" suffix="%" tip="Annual interest rate on your mortgage."/>
           </div>
-          <InputField label="Years Remaining" name="mortgageYearsRemaining" value={form.mortgageYearsRemaining} onChange={hc} type="number" suffix="yrs"/>
-          <SectionLabel>Property Condition</SectionLabel>
+          <InputField label="Years Remaining" name="mortgageYearsRemaining" value={form.mortgageYearsRemaining} onChange={hc} type="number" suffix="yrs" tip="How many years left on your mortgage term."/>
+          <SectionLabel tip="Component ages determine when major replacement costs will hit.">Property Condition</SectionLabel>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
-            <InputField label="Roof Age" name="roofAge" value={form.roofAge} onChange={hc} type="number" suffix="yrs"/>
-            <InputField label="HVAC Age" name="hvacAge" value={form.hvacAge} onChange={hc} type="number" suffix="yrs"/>
-            <InputField label="Water Heater" name="waterHeaterAge" value={form.waterHeaterAge} onChange={hc} type="number" suffix="yrs"/>
+            <InputField label="Roof Age" name="roofAge" value={form.roofAge} onChange={hc} type="number" suffix="yrs" tip="Roofs typically last 25-30 years. Replacement costs ~4% of property value."/>
+            <InputField label="HVAC Age" name="hvacAge" value={form.hvacAge} onChange={hc} type="number" suffix="yrs" tip="HVAC systems last 15-20 years. Replacement costs ~2% of property value."/>
+            <InputField label="Water Heater" name="waterHeaterAge" value={form.waterHeaterAge} onChange={hc} type="number" suffix="yrs" tip="Water heaters last 10-15 years."/>
           </div>
           <SectionLabel>Tax Info</SectionLabel>
-          <SelectField label="Federal Tax Bracket" name="taxBracket" value={form.taxBracket} onChange={hc} options={[{value:'10',label:'10%'},{value:'12',label:'12%'},{value:'22',label:'22%'},{value:'24',label:'24%'},{value:'32',label:'32%'},{value:'35',label:'35%'},{value:'37',label:'37%'}]}/>
+          <SelectField label="Federal Tax Bracket" name="taxBracket" value={form.taxBracket} onChange={hc} tip="Your marginal federal income tax rate. Affects depreciation tax savings calculations." options={[{value:'10',label:'10%'},{value:'12',label:'12%'},{value:'22',label:'22%'},{value:'24',label:'24%'},{value:'32',label:'32%'},{value:'35',label:'35%'},{value:'37',label:'37%'}]}/>
         </>)}
 
         {step===3&&(<>
           <SectionLabel>Market Assumptions</SectionLabel>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <InputField label="Annual Appreciation" name="annualAppreciation" value={form.annualAppreciation} onChange={hc} type="number" suffix="%"/>
-            <InputField label="Cap Rate (optional)" name="capRate" value={form.capRate} onChange={hc} type="number" suffix="%"/>
+            <InputField label="Appreciation" name="annualAppreciation" value={form.annualAppreciation} onChange={hc} type="number" suffix="%" tip="Expected annual property value growth. US average is ~3-4%."/>
+            <InputField label="Cap Rate" name="capRate" value={form.capRate} onChange={hc} type="number" suffix="%" tip="Net operating income ÷ property value. Measures investment yield. Optional."/>
           </div>
           <SectionLabel>Alternative Investment</SectionLabel>
-          <SelectField label="If you sell, where would you invest?" name="alternativeInvestment" value={form.alternativeInvestment} onChange={hc} options={[{value:'stock-market',label:'Stock Market (S&P 500)'},{value:'bonds',label:'Bonds / Fixed Income'},{value:'another-property',label:'Another Property (non-1031)'},{value:'mixed',label:'Mixed Portfolio'}]}/>
-          <InputField label="Expected Annual Return" name="alternativeReturn" value={form.alternativeReturn} onChange={hc} type="number" suffix="%"/>
+          <SelectField label="Invest proceeds where?" name="alternativeInvestment" value={form.alternativeInvestment} onChange={hc} tip="If you sell, where would the after-tax proceeds go?" options={[{value:'stock-market',label:'Stock Market (S&P 500)'},{value:'bonds',label:'Bonds / Fixed Income'},{value:'another-property',label:'Another Property (non-1031)'},{value:'mixed',label:'Mixed Portfolio'}]}/>
+          <InputField label="Expected Return" name="alternativeReturn" value={form.alternativeReturn} onChange={hc} type="number" suffix="%" tip="Annual return on your alternative investment. S&P 500 averages ~10% historically."/>
           <SectionLabel>Exit Strategy Interest</SectionLabel>
-          <SelectField label="What are you considering?" name="exitStrategy" value={form.exitStrategy} onChange={hc} options={[{value:'undecided',label:"Not sure yet \u2014 show me the data"},{value:'hold',label:'Leaning toward holding'},{value:'sell',label:'Leaning toward selling'},{value:'1031',label:'Interested in 1031 Exchange'}]}/>
+          <SelectField label="What are you considering?" name="exitStrategy" value={form.exitStrategy} onChange={hc} options={[{value:'undecided',label:"Not sure yet \u— show me the data"},{value:'hold',label:'Leaning toward holding'},{value:'sell',label:'Leaning toward selling'},{value:'1031',label:'Interested in 1031 Exchange'}]}/>
           {form.exitStrategy==='1031'&&(<>
-            <SectionLabel>1031 Exchange \u2014 Replacement Property</SectionLabel>
+            <SectionLabel>1031 Exchange \u— Replacement Property</SectionLabel>
             <InputField label="Replacement Property Value" name="replacementValue" value={form.replacementValue} onChange={hc} type="number" prefix="$"/>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
               <InputField label="Expected Annual Rent" name="replacementRent" value={form.replacementRent} onChange={hc} type="number" prefix="$"/>
@@ -104,7 +104,7 @@ export default function Questionnaire({onComplete, initialData}) {
         {step===4&&(<>
           <SectionLabel>Review Your Inputs</SectionLabel>
           <div style={{fontSize:14,color:'var(--text-secondary)',lineHeight:2}}>
-            <p><strong style={{color:'var(--gold)'}}>Property:</strong> {form.propertyType} in {form.location||'\u2014'}</p>
+            <p><strong style={{color:'var(--gold)'}}>Property:</strong> {form.propertyType} in {form.location||'\u—'}</p>
             <p><strong style={{color:'var(--gold)'}}>Purchase Price:</strong> {fmt(form.purchasePrice)}</p>
             <p><strong style={{color:'var(--gold)'}}>Current Value:</strong> {fmt(form.currentValue)}</p>
             <p><strong style={{color:'var(--gold)'}}>Annual Rent:</strong> {fmt(form.annualRent)}</p>
@@ -121,9 +121,9 @@ export default function Questionnaire({onComplete, initialData}) {
         </>)}
 
         <div style={{display:'flex',justifyContent:'space-between',marginTop:28}}>
-          {step>1?<button onClick={prev} style={{padding:'10px 24px',borderRadius:8,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:14,cursor:'pointer'}}>&larr; Back</button>:<div/>}
-          {step<totalSteps?<button onClick={next} style={{padding:'10px 28px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>Continue &rarr;</button>
-          :<button onClick={submit} style={{padding:'12px 36px',borderRadius:8,border:'none',background:'var(--gold)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',letterSpacing:'0.05em'}}>Analyze &rarr;</button>}
+          {step>1?<button onClick={prev} style={{padding:'10px 24px',borderRadius:8,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:14,cursor:'pointer'}}>← Back</button>:<div/>}
+          {step<totalSteps?<button onClick={next} style={{padding:'10px 28px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>Continue →</button>
+          :<button onClick={submit} style={{padding:'12px 36px',borderRadius:8,border:'none',background:'var(--gold)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',letterSpacing:'0.05em'}}>Analyze →</button>}
         </div>
       </Card>
     </div>
