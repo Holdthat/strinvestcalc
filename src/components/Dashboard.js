@@ -26,6 +26,8 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   // What-If Snapshots (Pro)
   const [snapshots, setSnapshots] = useState([]);
   const [snapName, setSnapName] = useState('');
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelected, setCompareSelected] = useState([]);
 
   // Mortgage Scenarios (Pro) — sync with formData on mount and after Edit
   const getMortRate = () => {
@@ -469,31 +471,147 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     </>);
   };
 
-  const renderSnapshots = () => (
-    <Card>
-      <SectionLabel>What-If Snapshots</SectionLabel>
-      <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:12}}>Save assumption sets to compare scenarios.</p>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input value={snapName} onChange={e=>setSnapName(e.target.value)} placeholder="Scenario name..." style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border-primary)',background:'var(--input-bg)',color:'var(--text-primary)',fontSize:13,outline:'none'}}/>
-        <button onClick={saveSnapshot} disabled={!snapName.trim()} style={{padding:'8px 16px',borderRadius:8,border:'none',background:snapName.trim()?'var(--accent)':'var(--text-dim)',color:'#fff',fontSize:13,fontWeight:700,cursor:snapName.trim()?'pointer':'not-allowed'}}>Save</button>
-      </div>
-      {snapshots.length===0&&<p style={{fontSize:13,color:'var(--text-faint)',textAlign:'center',padding:16}}>No snapshots yet. Adjust sliders above and save.</p>}
-      {snapshots.map((s,i)=>{
-        const h=calculateHoldScenario({...formData,annualAppreciation:s.sens.appreciation/100,vacancyRate:s.sens.vacancyRate},s.sens.yearsToHold);
-        const sv=calculateSellScenario({...formData,annualAppreciation:s.sens.appreciation/100,vacancyRate:s.sens.vacancyRate},s.sens.yearsToHold,s.sens.altReturn/100);
-        return (
-          <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:10,borderRadius:8,border:'1px solid var(--border-primary)',marginBottom:8,flexWrap:'wrap',gap:6}}>
-            <div><div style={{fontSize:13,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div><div style={{fontSize:10,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% · App {s.sens.appreciation}% · Alt {s.sens.altReturn}% · {s.sens.yearsToHold}yr</div></div>
-            <div style={{display:'flex',gap:10,alignItems:'center'}}>
-              <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--accent)'}}>{fmtK(h.totalWealth)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Hold</div></div>
-              <div style={{textAlign:'right'}}><div style={{fontSize:12,fontWeight:700,color:'var(--blue)'}}>{fmtK(sv.totalWealthAtEnd)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Sell</div></div>
-              <button onClick={()=>setSens({...s.sens})} style={{padding:'3px 8px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--accent)',fontSize:10,cursor:'pointer'}}>Load</button>
+  // Toggle snapshot for comparison (max 3)
+  const toggleCompare = (idx) => {
+    setCompareSelected(prev => {
+      if (prev.includes(idx)) return prev.filter(i=>i!==idx);
+      if (prev.length >= 3) return [...prev.slice(1), idx]; // rotate oldest out
+      return [...prev, idx];
+    });
+  };
+
+  // Compute results for all snapshots
+  const snapshotResults = useMemo(() => snapshots.map(s => {
+    const adj = {...formData, annualAppreciation:s.sens.appreciation/100, vacancyRate:s.sens.vacancyRate};
+    const h = calculateHoldScenario(adj, s.sens.yearsToHold);
+    const sv = calculateSellScenario(adj, s.sens.yearsToHold, s.sens.altReturn/100);
+    const noi = (h.yearlyData[0]?.effectiveRent||0) - (h.yearlyData[0]?.opExpenses||0) - (h.yearlyData[0]?.maintenance||0);
+    const capRate = noi / (parseFloat(formData.currentValue)||1) * 100;
+    return { ...s, hold: h, sell: sv, noi, capRate, cashFlow: h.yearlyData[0]?.netCashFlow||0 };
+  }), [snapshots, formData]);
+
+  const COMPARE_COLORS = [colors.accent, colors.blue, colors.gold];
+
+  const renderSnapshots = () => {
+    const selected = compareSelected.filter(i => i < snapshotResults.length);
+    const compareData = selected.map(i => snapshotResults[i]);
+
+    return (<>
+      {/* Save controls */}
+      <Card style={{marginBottom:16}}>
+        <SectionLabel tip="Save your current slider assumptions as a named scenario. Compare up to 3 side by side.">What-If Snapshots</SectionLabel>
+        <div style={{display:'flex',gap:8,marginBottom:16}}>
+          <input value={snapName} onChange={e=>setSnapName(e.target.value)} placeholder="Scenario name..." onKeyDown={e=>{if(e.key==='Enter')saveSnapshot();}}
+            style={{flex:1,padding:'10px 14px',borderRadius:8,border:'1px solid var(--border-primary)',background:'var(--input-bg)',color:'var(--text-primary)',fontSize:14,outline:'none'}}/>
+          <button onClick={saveSnapshot} disabled={!snapName.trim()} style={{padding:'10px 20px',borderRadius:8,border:'none',background:snapName.trim()?'var(--accent)':'var(--text-dim)',color:'#fff',fontSize:14,fontWeight:700,cursor:snapName.trim()?'pointer':'not-allowed'}}>Save</button>
+        </div>
+
+        {snapshots.length===0&&<p style={{fontSize:14,color:'var(--text-faint)',textAlign:'center',padding:20}}>No snapshots yet. Adjust the sliders above, name the scenario, and save.</p>}
+
+        {/* Snapshot list with checkboxes */}
+        {snapshotResults.map((s,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:12,borderRadius:8,border:`1.5px solid ${compareSelected.includes(i)?COMPARE_COLORS[compareSelected.indexOf(i)]||'var(--accent)':'var(--border-primary)'}`,marginBottom:8,background:compareSelected.includes(i)?'var(--bg-subtle)':'transparent',transition:'all 0.15s'}}>
+            {/* Checkbox */}
+            <div onClick={()=>toggleCompare(i)} style={{width:22,height:22,borderRadius:4,border:`2px solid ${compareSelected.includes(i)?COMPARE_COLORS[compareSelected.indexOf(i)]:'var(--border-primary)'}`,background:compareSelected.includes(i)?COMPARE_COLORS[compareSelected.indexOf(i)]:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:'#fff',fontSize:14,fontWeight:700}}>
+              {compareSelected.includes(i)&&'\u2713'}
+            </div>
+            {/* Info */}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700,color:'var(--text-primary)'}}>{s.name}</div>
+              <div style={{fontSize:11,color:'var(--text-muted)'}}>Vac {s.sens.vacancyRate}% · App {s.sens.appreciation}% · Alt {s.sens.altReturn}% · {s.sens.yearsToHold}yr</div>
+            </div>
+            {/* Quick metrics */}
+            <div style={{display:'flex',gap:12,alignItems:'center',flexShrink:0}}>
+              <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:700,color:'var(--accent)'}}>{fmtK(s.hold.totalWealth)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Hold</div></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:700,color:'var(--blue)'}}>{fmtK(s.sell.totalWealthAtEnd)}</div><div style={{fontSize:9,color:'var(--text-faint)'}}>Sell</div></div>
+              <button onClick={()=>setSens({...s.sens})} style={{padding:'4px 10px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--accent)',fontSize:11,cursor:'pointer'}}>Load</button>
+              <button onClick={()=>{setSnapshots(snapshots.filter((_,j)=>j!==i));setCompareSelected(prev=>prev.filter(j=>j!==i).map(j=>j>i?j-1:j));}} style={{padding:'4px 8px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--red)',fontSize:11,cursor:'pointer'}}>x</button>
             </div>
           </div>
-        );
-      })}
-    </Card>
-  );
+        ))}
+
+        {snapshots.length>=2&&<p style={{fontSize:12,color:'var(--text-muted)',marginTop:8,textAlign:'center'}}>Check 2-3 scenarios above to compare them side by side below.</p>}
+      </Card>
+
+      {/* ── COMPARISON VIEW ── */}
+      {selected.length>=2&&(<>
+        {/* Grouped Bar Chart: Hold vs Sell per scenario */}
+        <Card style={{marginBottom:16}}>
+          <SectionLabel>Scenario Comparison: Total Wealth</SectionLabel>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={compareData.map((s,i)=>({name:s.name,Hold:s.hold.totalWealth,Sell:s.sell.totalWealthAtEnd,Advantage:s.hold.totalWealth-s.sell.totalWealthAtEnd}))} margin={{top:10,right:10,left:0,bottom:0}}>
+              <CartesianGrid strokeDasharray="3 3" stroke={colors.grid}/>
+              <XAxis dataKey="name" stroke={colors.muted} fontSize={12}/>
+              <YAxis stroke={colors.muted} fontSize={11} tickFormatter={fmtK}/>
+              <Tooltip content={<ChartTooltip/>}/>
+              <Legend wrapperStyle={{fontSize:12}}/>
+              <Bar dataKey="Hold" fill={colors.accent} radius={[4,4,0,0]}/>
+              <Bar dataKey="Sell" fill={colors.blue} radius={[4,4,0,0]}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Radar overlay */}
+        <Card style={{marginBottom:16}}>
+          <SectionLabel>Multi-Dimensional Comparison</SectionLabel>
+          <ResponsiveContainer width="100%" height={280}>
+            <RadarChart data={[
+              {metric:'Hold Wealth',...Object.fromEntries(compareData.map((s,i)=>[s.name,s.hold.totalWealth/Math.max(...compareData.map(d=>d.hold.totalWealth),1)*100]))},
+              {metric:'Sell Wealth',...Object.fromEntries(compareData.map((s,i)=>[s.name,s.sell.totalWealthAtEnd/Math.max(...compareData.map(d=>d.sell.totalWealthAtEnd),1)*100]))},
+              {metric:'Cash Flow',...Object.fromEntries(compareData.map((s,i)=>[s.name,Math.max(0,s.cashFlow/Math.max(...compareData.map(d=>Math.abs(d.cashFlow)),1)*100)]))},
+              {metric:'Cap Rate',...Object.fromEntries(compareData.map((s,i)=>[s.name,s.capRate/Math.max(...compareData.map(d=>d.capRate),1)*100]))},
+              {metric:'Hold Period',...Object.fromEntries(compareData.map((s,i)=>[s.name,s.sens.yearsToHold/30*100]))},
+            ]}>
+              <PolarGrid stroke={colors.grid}/>
+              <PolarAngleAxis dataKey="metric" tick={{fontSize:11,fill:colors.muted}}/>
+              <PolarRadiusAxis tick={false} axisLine={false}/>
+              {compareData.map((s,i)=><Radar key={i} name={s.name} dataKey={s.name} stroke={COMPARE_COLORS[i]} fill={COMPARE_COLORS[i]} fillOpacity={0.15} strokeWidth={2}/>)}
+              <Legend wrapperStyle={{fontSize:12}}/>
+            </RadarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Comparison Table */}
+        <Card>
+          <SectionLabel>Side-by-Side Comparison</SectionLabel>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:400}}>
+              <thead>
+                <tr style={{borderBottom:'2px solid var(--border-primary)'}}>
+                  <th style={{textAlign:'left',padding:'10px 8px',color:'var(--gold)',fontWeight:700,fontSize:11,textTransform:'uppercase',fontFamily:"'JetBrains Mono',monospace"}}>Metric</th>
+                  {compareData.map((s,i)=><th key={i} style={{textAlign:'right',padding:'10px 8px',color:COMPARE_COLORS[i],fontWeight:700,fontSize:12}}>{s.name}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Hold Total Wealth',d=>fmtK(d.hold.totalWealth),'accent'],
+                  ['Sell & Invest',d=>fmtK(d.sell.totalWealthAtEnd),'blue'],
+                  ['Advantage (Hold-Sell)',d=>{const v=d.hold.totalWealth-d.sell.totalWealthAtEnd;return <span style={{color:v>=0?'var(--accent)':'var(--red)'}}>{v>=0?'+':''}{fmtK(v)}</span>;}],
+                  ['Year 1 Cash Flow',d=><span style={{color:(d.cashFlow>=0)?'var(--accent)':'var(--red)'}}>{fmtK(d.cashFlow)}</span>],
+                  ['Cap Rate',d=>`${d.capRate.toFixed(1)}%`],
+                  ['Vacancy',d=>`${d.sens.vacancyRate}%`],
+                  ['Appreciation',d=>`${d.sens.appreciation}%`],
+                  ['Alt. Return',d=>`${d.sens.altReturn}%`],
+                  ['Hold Period',d=>`${d.sens.yearsToHold} yrs`],
+                  ['Recommendation',d=>{const better=d.hold.totalWealth>=d.sell.totalWealthAtEnd;return <span style={{color:better?'var(--accent)':'var(--blue)',fontWeight:700}}>{better?'Hold':'Sell'}</span>;}],
+                ].map(([label,fn],ri)=>(
+                  <tr key={ri} style={{borderBottom:'1px solid var(--border-primary)'}}>
+                    <td style={{padding:'8px',color:'var(--text-muted)',fontSize:12}}>{label}</td>
+                    {compareData.map((s,ci)=>{
+                      const val = fn(s);
+                      // Highlight the best value in the row
+                      const vals = compareData.map(d=>fn(d));
+                      return <td key={ci} style={{textAlign:'right',padding:'8px',color:'var(--text-primary)',fontWeight:600}}>{val}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </>)}
+    </>);
+  };
 
   const renderAI = () => (
     <Card>
