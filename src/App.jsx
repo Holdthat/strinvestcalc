@@ -27,7 +27,8 @@ export default function App() {
 
   // App state
   const [view, setView] = useState('landing');
-  const [formData, setFormData] = useState(null);
+  const [rawFormData, setRawFormData] = useState(null); // Original user inputs for Edit flow
+  const [formData, setFormData] = useState(null); // Normalized for calculations
   const [holdResult, setHoldResult] = useState(null);
   const [sellResult, setSellResult] = useState(null);
   const [exchangeResult, setExchangeResult] = useState(null);
@@ -59,6 +60,7 @@ export default function App() {
       taxBracket: (parseFloat(data.taxBracket)||32)/100,
       sellingCostsPct: parseFloat(data.sellingCostsPct)||7.5,
     };
+    setRawFormData(data); // Keep original inputs for Edit
     setFormData(n);
     setHoldResult(calculateHoldScenario(n, 10));
     setSellResult(calculateSellScenario(n, 10, n.alternativeReturn));
@@ -92,7 +94,7 @@ export default function App() {
 
       {view === 'questionnaire' && (
         <div ref={calcRef}>
-          <Questionnaire onComplete={handleAnalyze} initialData={formData} dark={dark}/>
+          <Questionnaire onComplete={handleAnalyze} initialData={rawFormData} dark={dark}/>
         </div>
       )}
 
