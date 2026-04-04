@@ -18,6 +18,13 @@
       }
     },
     {
+      "src": "^/docs/(.*)$",
+      "dest": "/docs/$1",
+      "headers": {
+        "Content-Disposition": "attachment"
+      }
+    },
+    {
       "src": "^/.*",
       "dest": "/index.html"
     }
