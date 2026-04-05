@@ -12,6 +12,21 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   const show1031 = !!exchangeResult;
   const colors = chartColors(dark);
 
+  // Simple markdown to HTML renderer
+  const renderMarkdown = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '<h4 style="font-size:15px;font-weight:700;color:var(--gold);margin:16px 0 8px;font-family:\'JetBrains Mono\',monospace;letter-spacing:0.04em;">$1</h4>')
+      .replace(/^## (.+)$/gm, '<h3 style="font-size:17px;font-weight:700;color:var(--text-primary);margin:20px 0 10px;border-bottom:1px solid var(--border-primary);padding-bottom:6px;">$1</h3>')
+      .replace(/^# (.+)$/gm, '<h2 style="font-size:20px;font-weight:800;color:var(--accent);margin:0 0 12px;">$1</h2>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-primary);">$1</strong>')
+      .replace(/^- (.+)$/gm, '<div style="padding:3px 0 3px 16px;position:relative;"><span style="position:absolute;left:0;color:var(--gold);">\u2022</span>$1</div>')
+      .replace(/^(\d+)\. (.+)$/gm, '<div style="padding:3px 0 3px 20px;position:relative;"><span style="position:absolute;left:0;color:var(--gold);font-weight:700;">$1.</span>$2</div>')
+      .replace(/\n\n/g, '<div style="margin:12px 0;"></div>')
+      .replace(/\n/g, '<br/>');
+  };
+
   const [activeTab, setActiveTab] = useState('overview');
   const [slidersOpen, setSlidersOpen] = useState(true);
 
@@ -63,7 +78,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     {value:'quick-take',label:'⚡ Quick Take',desc:'One paragraph. The fastest possible read.'},
   ];
   const AI_TONES = [{value:'professional',label:'Professional'},{value:'conversational',label:'Conversational'},{value:'technical',label:'Technical'},{value:'encouraging',label:'Encouraging'}];
-  const AI_LENGTHS = [{value:'short',label:'Short (2-3 sentences)',tokens:200},{value:'medium',label:'Medium (1 paragraph)',tokens:400},{value:'detailed',label:'Detailed (2-3 paragraphs)',tokens:800}];
+  const AI_LENGTHS = [{value:'short',label:'Short (2-3 sentences)',tokens:400},{value:'medium',label:'Medium (1 paragraph)',tokens:800},{value:'detailed',label:'Detailed (2-3 paragraphs)',tokens:1500}];
 
   // ── Core calculations ──
   const results = useMemo(() => {
@@ -133,7 +148,6 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
     setAiLoading(true);
     const preset = AI_PRESETS.find(p=>p.value===aiPreset);
     const lengthCfg = AI_LENGTHS.find(l=>l.value===aiLength);
-    const baseData = `Property: ${formData.propertyType} in ${formData.location}. Value: ${fmt(formData.currentValue)}, Purchase: ${fmt(formData.purchasePrice)}, Rent: ${fmt(formData.annualRent)}, Expenses: ${fmt(formData.annualExpenses)}, Vacancy: ${sens.vacancyRate}%, Mortgage: ${fmt(formData.mortgageBalance)} at ${(parseFloat(formData.mortgageRate)*100).toFixed(1)}%. Hold ${sens.yearsToHold}yr: ${fmtK(hold.totalWealth)}, Sell: ${fmtK(sell.totalWealthAtEnd)}${show1031?`, 1031: ${fmtK(exch.totalWealth)}`:''}. Rec: ${rec.text}, advantage ${fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}.`;
     const presetInstructions = {
       'investor-brief':'Write a concise investment brief. Lead with the recommendation and key numbers. Include ROI metrics. End with the single biggest risk factor.',
       'partner-explainer':'Explain this like you\'re talking to someone\'s spouse who isn\'t in real estate. No jargon. Use simple comparisons. Help them understand the trade-offs of holding vs selling.',
@@ -143,8 +157,31 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       'quick-take':'One paragraph maximum. Fastest possible read. Lead with the bottom line, include 2-3 key numbers, done.',
     };
     // Build discovery context for AI
-    const discoveryContext = discoveryData ? ` Client profile: ${discoveryData.situation}. Priority: ${discoveryData.priority}. Risk tolerance: ${discoveryData.risk}. Timeline: ${discoveryData.timeline}. Experience: ${discoveryData.experience}.` : '';
-    const prompt = `You are a real estate investment analyst.${discoveryContext} ${presetInstructions[aiPreset]||''} Tone: ${aiTone}. Length: ${aiLength} (${lengthCfg?.tokens||400} tokens max). Data: ${baseData}`;
+    const discoveryContext = discoveryData ? `
+The client describes themselves as: ${discoveryData.situation}.
+Their top priority is: ${discoveryData.priority}.
+Risk tolerance: ${discoveryData.risk}.
+Timeline: ${discoveryData.timeline}.
+Investment experience: ${discoveryData.experience}.
+Tailor your analysis to this profile.` : '';
+
+    const prompt = `You are a senior real estate investment analyst writing for a property owner.${discoveryContext}
+
+TASK: ${presetInstructions[aiPreset]||'Provide a clear investment analysis.'}
+
+TONE: ${aiTone}
+LENGTH: ${aiLength} — you MUST write a complete, finished response. Do not cut off mid-sentence.
+
+PROPERTY DATA:
+- Type: ${formData.propertyType} in ${formData.location}
+- Current Value: ${fmt(formData.currentValue)}, Purchase Price: ${fmt(formData.purchasePrice)}
+- Annual Rent: ${fmt(formData.annualRent)}, Annual Expenses: ${fmt(formData.annualExpenses)}
+- Vacancy: ${sens.vacancyRate}%, Mortgage: ${fmt(formData.mortgageBalance)} at ${(parseFloat(formData.mortgageRate)*100).toFixed(1)}%
+- Hold ${sens.yearsToHold} years total wealth: ${fmtK(hold.totalWealth)}
+- Sell & invest total wealth: ${fmtK(sell.totalWealthAtEnd)}${show1031?`\n- 1031 Exchange total wealth: ${fmtK(exch.totalWealth)}`:''}
+- Recommendation: ${rec.text}, advantage: ${fmtK(Math.abs(hold.totalWealth-sell.totalWealthAtEnd))}
+
+Write your complete analysis now.`;
     try {
       const key = geminiKey || (()=>{try{return localStorage.getItem('vhg-gemini-key')||'';}catch(_e){return '';}})();
       const resp = await fetch('/api/ai-summary', {
@@ -645,7 +682,7 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
 
       {aiSummary ? (
         <div style={{padding:20,borderRadius:10,background:'var(--bg-primary)',border:'1px solid var(--border-accent)',fontSize:15,color:'var(--text-secondary)',lineHeight:1.8}}>
-          {aiSummary}
+          <div dangerouslySetInnerHTML={{__html: renderMarkdown(aiSummary)}} />
           <div style={{marginTop:12,display:'flex',gap:8}}>
             <button onClick={generateAI} style={{padding:'6px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Regenerate</button>
             <button onClick={()=>navigator.clipboard?.writeText(aiSummary)} style={{padding:'6px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Copy</button>
