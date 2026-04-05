@@ -143,6 +143,24 @@ export default async function handler(req, res) {
                 <li><strong>What-If Snapshots</strong></li>
                 <li><strong>AI Investment Summary</strong></li>
               </ul>
+              <p style="font-size:16px;color:#1E293B;line-height:1.6;margin-top:20px;">
+                <strong>More tools from Vacation Home Group:</strong>
+              </p>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin:12px 0 20px;">
+                <table style="width:100%;font-size:14px;color:#1E293B;">
+                  <tr>
+                    <td style="padding:8px 12px;vertical-align:top;width:50%;">
+                      <strong style="color:#167A5E;">STRcalc</strong><br/>
+                      <span style="font-size:13px;color:#64748B;">3-scenario purchase analyzer with deal signal scoring, cleaning economics, and PDF export.</span><br/>
+                      <a href="https://str-calc-sigma.vercel.app" style="color:#9A7820;font-size:13px;font-weight:600;">Open STRcalc &rarr;</a>
+                    </td>
+                    <td style="padding:8px 12px;vertical-align:top;width:50%;border-left:1px solid #E2E8F0;">
+                      <strong style="color:#167A5E;">More Coming Soon</strong><br/>
+                      <span style="font-size:13px;color:#64748B;">Seller Calculator, Rent vs Own, and more — all free for VHG clients.</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               <p style="font-size:16px;color:#1E293B;line-height:1.6;">Questions? We're here:</p>
               <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin:16px 0;">
                 <table style="width:100%;font-size:14px;color:#1E293B;">
