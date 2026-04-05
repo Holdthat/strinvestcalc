@@ -1033,11 +1033,20 @@ IMPORTANT: End your response with this disclaimer on its own line, separated by 
         <div style={{fontSize:16,fontWeight:600,color:'var(--text-muted)'}}>{formData.propertyType} · {formData.location}</div>
         <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
           <button onClick={()=>{
-            const data = {formData:rawFormData||formData,discovery:discoveryData};
-            const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-            const url = `${window.location.origin}${window.location.pathname}?share=${encoded}`;
+            // Compact share: only non-empty, non-default values with short keys
+            const raw = rawFormData||formData;
+            const defaults = {propertyType:'single-family',managementStyle:'self-managed',vacancyRate:'10',roofAge:'5',hvacAge:'5',waterHeaterAge:'3',annualAppreciation:'3',alternativeInvestment:'stock-market',alternativeReturn:'7',exitStrategy:'undecided',taxBracket:'32',sellingCostsPct:'7.5'};
+            const keyMap = {propertyType:'t',location:'l',purchasePrice:'pp',currentValue:'cv',yearsOwned:'yo',annualRent:'ar',annualExpenses:'ae',vacancyRate:'vr',mortgageBalance:'mb',mortgageRate:'mr',mortgageYearsRemaining:'my',roofAge:'ra',hvacAge:'ha',waterHeaterAge:'wa',annualAppreciation:'ap',alternativeReturn:'rt',exitStrategy:'es',taxBracket:'tb',sellingCostsPct:'sc',managementStyle:'ms',alternativeInvestment:'ai',replacementValue:'rv',replacementRent:'rr',replacementExpenses:'re',capRate:'cr'};
+            const compact = {};
+            Object.entries(raw).forEach(([k,v]) => {
+              if(v && v !== '' && v !== defaults[k] && keyMap[k]) compact[keyMap[k]] = v;
+            });
+            if(discoveryData?.situation_value) compact.ds = discoveryData.situation_value;
+            if(discoveryData?.risk_value) compact.dr = discoveryData.risk_value;
+            const encoded = btoa(JSON.stringify(compact)).replace(/=/g,'');
+            const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
             navigator.clipboard?.writeText(url);
-            alert('Share link copied to clipboard!');
+            alert('Share link copied! (' + url.length + ' chars)');
           }} style={{padding:'7px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Share Link</button>
           <button onClick={()=>generatePDF()} style={{padding:'7px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>PDF Report</button>
           {!isPro&&<button onClick={onProClick} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>PRO</button>}
