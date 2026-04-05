@@ -33,8 +33,8 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
   // Sensitivity — formData values are already normalized (0.03 = 3%, 0.07 = 7%)
   const [sens, setSens] = useState({
     vacancyRate: parseFloat(formData.vacancyRate)||10,
-    appreciation: Math.round((parseFloat(formData.annualAppreciation)||0.03)*100),
-    altReturn: Math.round((parseFloat(formData.alternativeReturn)||0.07)*100),
+    appreciation: Math.round((parseFloat(formData.annualAppreciation)||0.03)*200)/2,
+    altReturn: Math.round((parseFloat(formData.alternativeReturn)||0.07)*200)/2,
     yearsToHold: 10,
   });
 
@@ -225,8 +225,8 @@ Write your complete analysis now.`;
       {slidersOpen && (
         <div style={{marginTop:16,display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>
           <Slider label="Vacancy" min={0} max={100} step={1} value={sens.vacancyRate} displayValue={`${Math.round(sens.vacancyRate)}%`} tip="Percentage of the year the property sits empty. National STR average is 25-40%." onChange={e=>setSens({...sens,vacancyRate:e.target.value})}/>
-          <Slider label="Appreciation" min={-5} max={15} step={1} value={sens.appreciation} displayValue={`${Math.round(sens.appreciation)}%`} tip="Annual property value growth. US historical average is ~3-4%. Hot markets can see 8-10%." onChange={e=>setSens({...sens,appreciation:e.target.value})}/>
-          <Slider label="Alt. Return" min={0} max={15} step={1} value={sens.altReturn} displayValue={`${Math.round(sens.altReturn)}%`} tip="What you'd earn if you sold and invested the proceeds elsewhere. S&P 500 averages ~10% historically." onChange={e=>setSens({...sens,altReturn:e.target.value})}/>
+          <Slider label="Appreciation" min={-5} max={15} step={0.5} value={sens.appreciation} displayValue={`${Number(sens.appreciation).toFixed(1)}%`} tip="Annual property value growth. US historical average is ~3-4%. Hot markets can see 8-10%." onChange={e=>setSens({...sens,appreciation:e.target.value})}/>
+          <Slider label="Alt. Return" min={0} max={15} step={0.5} value={sens.altReturn} displayValue={`${Number(sens.altReturn).toFixed(1)}%`} tip="What you'd earn if you sold and invested the proceeds elsewhere. S&P 500 averages ~10% historically." onChange={e=>setSens({...sens,altReturn:e.target.value})}/>
           <Slider label="Hold Period" min={1} max={30} step={1} value={sens.yearsToHold} displayValue={`${sens.yearsToHold} yrs`} suffix=" yrs" tip="How many years into the future to project. Longer periods favor holding due to appreciation compounding." onChange={e=>setSens({...sens,yearsToHold:e.target.value})}/>
         </div>
       )}
@@ -723,7 +723,7 @@ Write your complete analysis now.`;
   const renderHowItWorks = () => (
     <div>
       <Card style={{marginBottom:16}}>
-        <SectionLabel>How STRInvestCalc Works</SectionLabel>
+        <SectionLabel>How PropertyPath Works</SectionLabel>
         <p style={{fontSize:15,color:'var(--text-secondary)',lineHeight:1.7,marginBottom:20}}>
           This tool models three investment scenarios for your short-term rental property and recommends the best path based on your specific numbers and assumptions.
         </p>
@@ -772,13 +772,13 @@ Write your complete analysis now.`;
             <div style={{fontSize:28,marginBottom:8}}>📖</div>
             <h3 style={{fontSize:15,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>User Manual</h3>
             <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.5,marginBottom:12}}>Complete guide to every feature, tab, chart, and slider in the tool.</p>
-            <a href="/docs/STRInvestCalc_User_Manual.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
+            <a href="/docs/PropertyPath_User_Manual.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
           </div>
           <div style={{padding:16,borderRadius:8,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
             <div style={{fontSize:28,marginBottom:8}}>📋</div>
             <h3 style={{fontSize:15,fontWeight:700,color:'var(--text-primary)',marginBottom:6}}>Glossary</h3>
             <p style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.5,marginBottom:12}}>24 terms defined: 1031 Exchange, Cap Rate, Cost Segregation, NOI, and more.</p>
-            <a href="/docs/STRInvestCalc_Glossary.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
+            <a href="/docs/PropertyPath_Glossary.docx" download style={{display:'inline-block',padding:'8px 16px',borderRadius:6,background:'var(--accent)',color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Download</a>
           </div>
         </div>
       </Card>

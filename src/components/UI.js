@@ -210,7 +210,7 @@ export const NavBar = ({dark,setDark,onNav}) => (
       </svg>
       <div style={{minWidth:0}}>
         <div style={{fontSize:30,fontWeight:800,color:'var(--text-primary)',letterSpacing:'-0.02em',lineHeight:1}}>
-          STR<span style={{color:'var(--gold)'}}>Invest</span>Calc
+          Property<span style={{color:'var(--gold)'}}>Path</span>
         </div>
         <div style={{fontSize:13,color:'var(--gold)',fontStyle:'italic',fontFamily:'Georgia,serif',marginTop:3}}>
           by Vacation Home Group
@@ -252,12 +252,12 @@ export const AppHeader = ({dark}) => (
       <div>
         <div style={{display:'flex',alignItems:'baseline',gap:8,flexWrap:'wrap'}}>
           <span style={{fontSize:24,fontWeight:800,color:'var(--text-primary)',letterSpacing:'-0.01em'}}>
-            STR<span style={{color:'var(--gold)'}}>Invest</span>Calc
+            Property<span style={{color:'var(--gold)'}}>Path</span>
           </span>
           <span style={{fontSize:13,color:'var(--gold)',fontStyle:'italic',fontFamily:'Georgia,serif'}}>by Vacation Home Group</span>
         </div>
         <div style={{fontSize:12,color:'var(--text-muted)',fontFamily:"'JetBrains Mono',monospace",letterSpacing:'0.08em',marginTop:3}}>
-          SHORT TERM RENTAL INVESTMENT ANALYZER {String.fromCharCode(183)} Ver. {APP_VERSION}
+          YOUR REAL ESTATE INVESTMENT ADVISOR {String.fromCharCode(183)} Ver. {APP_VERSION}
         </div>
       </div>
     </div>
@@ -379,7 +379,7 @@ export const VHGFooter = ({dark}) => (
     <div style={{marginBottom:0}}><VHGFooterLogo dark={dark}/></div>
     <div style={{fontSize:15,color:'var(--text-muted)',fontStyle:'italic',fontFamily:'Georgia,serif'}}>Your Retreat, Our Expertise</div>
     <div style={{fontSize:15,color:'var(--text-primary)',marginBottom:20,fontFamily:"'DM Mono',monospace"}}>Real Broker NH, LLC</div>
-    <div style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,color:'var(--text-primary)',marginBottom:2}}>STR<span style={{color:'var(--gold)'}}>Invest</span>Calc</div>
+    <div style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,color:'var(--text-primary)',marginBottom:2}}>Property<span style={{color:'var(--gold)'}}>Path</span></div>
     <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:4}}>by Vacation Home Group</div>
     <div style={{fontSize:12,color:'var(--text-faint)',marginBottom:16,fontFamily:"'JetBrains Mono',monospace"}}>v{APP_VERSION}</div>
     <GoldDivider/>
