@@ -29,12 +29,24 @@ export default function App() {
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
+      // Compact format (?s=...)
+      const compact = params.get('s');
+      if (compact) {
+        const keyMap = {t:'propertyType',l:'location',pp:'purchasePrice',cv:'currentValue',yo:'yearsOwned',ar:'annualRent',ae:'annualExpenses',vr:'vacancyRate',mb:'mortgageBalance',mr:'mortgageRate',my:'mortgageYearsRemaining',ra:'roofAge',ha:'hvacAge',wa:'waterHeaterAge',ap:'annualAppreciation',rt:'alternativeReturn',es:'exitStrategy',tb:'taxBracket',sc:'sellingCostsPct',ms:'managementStyle',ai:'alternativeInvestment',rv:'replacementValue',rr:'replacementRent',re:'replacementExpenses',cr:'capRate'};
+        const defaults = {propertyType:'single-family',managementStyle:'self-managed',vacancyRate:'10',roofAge:'5',hvacAge:'5',waterHeaterAge:'3',annualAppreciation:'3',alternativeInvestment:'stock-market',alternativeReturn:'7',exitStrategy:'undecided',taxBracket:'32',sellingCostsPct:'7.5'};
+        const parsed = JSON.parse(atob(compact + '=='.slice(0, (4 - compact.length % 4) % 4)));
+        const formData = {...defaults};
+        Object.entries(parsed).forEach(([k,v]) => { if(keyMap[k]) formData[keyMap[k]] = v; });
+        if (parsed.ds) setDiscoveryData({situation_value:parsed.ds, risk_value:parsed.dr||''});
+        setTimeout(() => handleAnalyze(formData), 100);
+        return;
+      }
+      // Legacy format (?share=...)
       const shared = params.get('share');
       if (shared) {
         const data = JSON.parse(decodeURIComponent(atob(shared)));
         if (data.formData) {
           if (data.discovery) setDiscoveryData(data.discovery);
-          // Simulate submitting the form
           setTimeout(() => handleAnalyze(data.formData), 100);
         }
       }
