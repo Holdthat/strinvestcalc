@@ -159,6 +159,12 @@ export default async function handler(req, res) {
                 </table>
               </div>
               <hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0;"/>
+              <p style="font-size:11px;color:#94A3B8;text-align:center;line-height:1.6;">
+                By using this platform, you consent to the collection of your email address and preferences for the purpose of delivering personalized market analysis. We do not sell or share your information with third parties.
+              </p>
+              <p style="font-size:11px;color:#94A3B8;text-align:center;line-height:1.6;">
+                Projections are estimates based on user-provided inputs. This tool does not constitute financial, tax, or investment advice. Consult a qualified real estate professional before making investment decisions. Joe Mori &amp; Dino Amato, Real Broker NH. Each office is independently owned and operated.
+              </p>
               <p style="font-size:12px;color:#94A3B8;text-align:center;">
                 Vacation Home Group &middot; Real Broker NH &middot; 855-450-0442<br/>
                 <a href="https://www.vacationhomegroup.net" style="color:#9A7820;">vacationhomegroup.net</a>
