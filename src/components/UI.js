@@ -334,7 +334,7 @@ export const ProGate = ({onUnlock,onClose,discoveryData}) => {
           <button onClick={sendCode} disabled={!name||!email||loading} style={btnStyle(name&&email&&!loading)}>
             {loading ? 'Sending...' : 'Send Verification Code'}
           </button>
-          <p style={{fontSize:12,color:'var(--text-faint)',textAlign:'center',marginTop:12}}>We do not sell or share your information with third parties.</p>
+          <p style={{fontSize:11,color:'var(--text-faint)',textAlign:'center',marginTop:12,lineHeight:1.6}}>By submitting, you consent to the collection of your email address and preferences for the purpose of delivering personalized market analysis. We do not sell or share your information with third parties.</p>
         </>)}
 
         {step==='verify' && (<>
