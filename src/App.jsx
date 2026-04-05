@@ -80,6 +80,7 @@ export default function App() {
 
   // Run analysis
   const handleAnalyze = useCallback((data) => {
+    const isBuyerMode = discoveryData?.situation_value === 'evaluating-purchase';
     const n = {
       ...data,
       vacancyRate: parseFloat(data.vacancyRate)||10,
@@ -87,7 +88,8 @@ export default function App() {
       annualAppreciation: (parseFloat(data.annualAppreciation)||3)/100,
       alternativeReturn: (parseFloat(data.alternativeReturn)||7)/100,
       taxBracket: (parseFloat(data.taxBracket)||32)/100,
-      sellingCostsPct: parseFloat(data.sellingCostsPct)||7.5,
+      sellingCostsPct: parseFloat(data.sellingCostsPct)||(isBuyerMode?3:7.5),
+      isBuyer: isBuyerMode,
     };
     setRawFormData(data);
     setFormData(n);
@@ -128,7 +130,7 @@ export default function App() {
 
       {view === 'questionnaire' && (
         <div ref={calcRef}>
-          <Questionnaire onComplete={handleAnalyze} initialData={rawFormData} dark={dark}/>
+          <Questionnaire onComplete={handleAnalyze} initialData={rawFormData} dark={dark} discoveryData={discoveryData}/>
         </div>
       )}
 
