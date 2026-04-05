@@ -10,13 +10,23 @@ export function calculateHoldScenario(data, years = 10) {
   const mPay = mortBal>0&&mR>0&&tP>0 ? mortBal*(mR*Math.pow(1+mR,tP))/(Math.pow(1+mR,tP)-1) : 0;
   const annDS = mPay*12;
   const depBasis = pp*0.85, annDep = depBasis/27.5;
+  // Maintenance schedule — major replacements as single-year costs
+  const ROOF_LIFE=25, HVAC_LIFE=15, WH_LIFE=12;
+  const roofAge=parseInt(data.roofAge)||0, hvacAge=parseInt(data.hvacAge)||0, whAge=parseInt(data.waterHeaterAge)||0;
+  const roofCost=cv*0.04, hvacCost=cv*0.02, whCost=cv*0.005;
   const maintSched = [];
+  const maintEvents = []; // Track for display
   for(let y=1;y<=years;y++){
     let e=0;
-    const rA=(parseInt(data.roofAge)||0)+y, hA=(parseInt(data.hvacAge)||0)+y, wA=(parseInt(data.waterHeaterAge)||0)+y;
-    if(rA>=25&&rA<=27) e+=cv*0.04;
-    if(hA>=15&&hA<=17) e+=cv*0.02;
-    if(wA>=12&&wA<=13) e+=cv*0.005;
+    const rA=roofAge+y, hA=hvacAge+y, wA=whAge+y;
+    // Trigger replacement when component reaches end of life (or overdue in year 1)
+    if(rA===ROOF_LIFE||(y===1&&roofAge>=ROOF_LIFE)){e+=roofCost;maintEvents.push({year:y,component:'Roof',cost:roofCost,age:y===1&&roofAge>=ROOF_LIFE?roofAge:rA});}
+    if(hA===HVAC_LIFE||(y===1&&hvacAge>=HVAC_LIFE)){e+=hvacCost;maintEvents.push({year:y,component:'HVAC',cost:hvacCost,age:y===1&&hvacAge>=HVAC_LIFE?hvacAge:hA});}
+    if(wA===WH_LIFE||(y===1&&whAge>=WH_LIFE)){e+=whCost;maintEvents.push({year:y,component:'Water Heater',cost:whCost,age:y===1&&whAge>=WH_LIFE?whAge:wA});}
+    // Second replacement cycle
+    if(rA===ROOF_LIFE*2){e+=roofCost;maintEvents.push({year:y,component:'Roof (2nd)',cost:roofCost,age:rA});}
+    if(hA===HVAC_LIFE*2){e+=hvacCost;maintEvents.push({year:y,component:'HVAC (2nd)',cost:hvacCost,age:hA});}
+    if(wA===WH_LIFE*2){e+=whCost;maintEvents.push({year:y,component:'Water Heater (2nd)',cost:whCost,age:wA});}
     maintSched.push(e);
   }
   const yearlyData = []; let cumCF=0, remMort=mortBal;
@@ -27,7 +37,7 @@ export function calculateHoldScenario(data, years = 10) {
     const ncf=er-oe-m-ds; cumCF+=ncf; const eq=pv-remMort;
     yearlyData.push({year:y,propertyValue:Math.round(pv),effectiveRent:Math.round(er),opExpenses:Math.round(oe),maintenance:Math.round(m),debtService:Math.round(ds),netCashFlow:Math.round(ncf),cumulativeCashFlow:Math.round(cumCF),equity:Math.round(eq),depreciation:Math.round(annDep)});
   }
-  return {yearlyData, totalWealth:(yearlyData[years-1]?.equity||0)+cumCF, totalCashFlow:cumCF, annualCashFlow:cumCF/years};
+  return {yearlyData, totalWealth:(yearlyData[years-1]?.equity||0)+cumCF, totalCashFlow:cumCF, annualCashFlow:cumCF/years, maintEvents};
 }
 
 export function calculateSellScenario(data, years = 10, altReturn = 0.07) {
