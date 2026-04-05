@@ -8,7 +8,7 @@ import { Card, SectionLabel, Slider, TabBar, ChartTooltip, InputField, SelectFie
 import { calculateHoldScenario, calculateSellScenario, calculate1031Scenario, calculateTaxBenefits, calculateMortgageScenario, fmt, fmtK } from '../utils/calculations';
 import { chartColors } from '../utils/theme';
 
-export default function Dashboard({formData, sellResult, exchangeResult, onEditAssumptions, dark, isPro, onProClick, discoveryData}) {
+export default function Dashboard({formData, rawFormData, sellResult, exchangeResult, onEditAssumptions, dark, isPro, onProClick, discoveryData, proUserEmail}) {
   const show1031 = !!exchangeResult;
   const colors = chartColors(dark);
 
@@ -25,6 +25,98 @@ export default function Dashboard({formData, sellResult, exchangeResult, onEditA
       .replace(/^(\d+)\. (.+)$/gm, '<div style="padding:3px 0 3px 20px;position:relative;"><span style="position:absolute;left:0;color:var(--gold);font-weight:700;">$1.</span>$2</div>')
       .replace(/\n\n/g, '<div style="margin:12px 0;"></div>')
       .replace(/\n/g, '<br/>');
+  };
+
+  // PDF Export — generates a printable report in a new window
+  const generatePDF = () => {
+    const yr1 = hold.yearlyData[0];
+    const maintTotal = hold.maintEvents ? hold.maintEvents.reduce((s,e)=>s+e.cost,0) : 0;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>PropertyPath Report — ${formData.location}</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:40px;color:#1E293B;font-size:14px;line-height:1.6;}
+  h1{color:#167A5E;font-size:26px;margin:0 0 4px;} h2{color:#1A1A1A;font-size:18px;border-bottom:2px solid #E2E8F0;padding-bottom:6px;margin:28px 0 12px;}
+  h3{color:#9A7820;font-size:14px;text-transform:uppercase;letter-spacing:0.08em;margin:20px 0 8px;}
+  .subtitle{color:#94A3B8;font-size:13px;} .gold{color:#9A7820;} .green{color:#167A5E;} .red{color:#EF4444;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;} td,th{padding:8px 10px;border-bottom:1px solid #E2E8F0;text-align:left;font-size:13px;}
+  th{background:#F0F4F8;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#64748B;}
+  .metric{display:inline-block;width:30%;vertical-align:top;margin-bottom:16px;}
+  .metric-val{font-size:22px;font-weight:700;} .metric-label{font-size:11px;color:#94A3B8;text-transform:uppercase;}
+  .disclaimer{margin-top:32px;padding:16px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;font-size:11px;color:#94A3B8;line-height:1.6;}
+  @media print{body{padding:20px;} .no-print{display:none;}}
+</style></head><body>
+<div style="text-align:center;margin-bottom:24px;">
+  <h1>Property<span class="gold">Path</span></h1>
+  <div class="subtitle">by Vacation Home Group · Investment Analysis Report</div>
+</div>
+
+<h2>Property Overview</h2>
+<table>
+  <tr><td style="width:40%;color:#94A3B8;">Property</td><td><strong>${formData.propertyType} in ${formData.location}</strong></td></tr>
+  <tr><td style="color:#94A3B8;">Current Value</td><td>${fmt(formData.currentValue)}</td></tr>
+  <tr><td style="color:#94A3B8;">Purchase Price</td><td>${fmt(formData.purchasePrice)}</td></tr>
+  <tr><td style="color:#94A3B8;">Annual Gross Rent</td><td>${fmt(formData.annualRent)}</td></tr>
+  <tr><td style="color:#94A3B8;">Annual Expenses</td><td>${fmt(formData.annualExpenses)}</td></tr>
+  <tr><td style="color:#94A3B8;">Mortgage</td><td>${fmt(formData.mortgageBalance)} at ${(parseFloat(formData.mortgageRate)*100).toFixed(1)}%</td></tr>
+  <tr><td style="color:#94A3B8;">Selling Costs</td><td>${parseFloat(formData.sellingCostsPct)||7.5}%</td></tr>
+</table>
+
+<h2>Key Metrics</h2>
+<div>
+  <div class="metric"><div class="metric-val green">${fmtK(hold.totalWealth)}</div><div class="metric-label">Hold Total (${sens.yearsToHold}yr)</div></div>
+  <div class="metric"><div class="metric-val" style="color:#3B82F6;">${fmtK(sell.totalWealthAtEnd)}</div><div class="metric-label">Sell & Invest</div></div>
+  ${show1031?`<div class="metric"><div class="metric-val" style="color:#8B5CF6;">${fmtK(exch.totalWealth)}</div><div class="metric-label">1031 Exchange</div></div>`:''}
+  <div class="metric"><div class="metric-val" style="color:${rec.text.includes('Hold')?'#167A5E':'#3B82F6'};">${rec.text}</div><div class="metric-label">Recommendation</div></div>
+  <div class="metric"><div class="metric-val gold">${calcCapRate.toFixed(1)}%</div><div class="metric-label">Cap Rate</div></div>
+  <div class="metric"><div class="metric-val ${(yr1?.netCashFlow||0)>=0?'green':'red'}">${fmtK(yr1?.netCashFlow||0)}</div><div class="metric-label">Year 1 Cash Flow</div></div>
+</div>
+
+<h2>Assumptions</h2>
+<table>
+  <tr><td style="color:#94A3B8;">Vacancy Rate</td><td>${sens.vacancyRate}%</td></tr>
+  <tr><td style="color:#94A3B8;">Annual Appreciation</td><td>${sens.appreciation}%</td></tr>
+  <tr><td style="color:#94A3B8;">Alternative Return</td><td>${sens.altReturn}%</td></tr>
+  <tr><td style="color:#94A3B8;">Hold Period</td><td>${sens.yearsToHold} years</td></tr>
+</table>
+
+${hold.maintEvents&&hold.maintEvents.length>0?`
+<h2>Projected Capital Expenses</h2>
+<table>
+  <tr><th>Component</th><th>Year</th><th>Est. Cost</th><th>Age at Replacement</th></tr>
+  ${hold.maintEvents.map(e=>`<tr><td>${e.component}</td><td>${e.year===1&&e.age>=25?'Overdue':'Year '+e.year}</td><td>${fmtK(e.cost)}</td><td>${e.age} years</td></tr>`).join('')}
+  <tr><td><strong>Total</strong></td><td></td><td><strong>${fmtK(maintTotal)}</strong></td><td></td></tr>
+</table>`:''}
+
+<h2>Year-by-Year Projection</h2>
+<table>
+  <tr><th>Year</th><th>Property Value</th><th>Equity</th><th>Cash Flow</th><th>Hold Total</th><th>Sell Value</th></tr>
+  ${hold.yearlyData.slice(0,sens.yearsToHold).map((d,i)=>`<tr><td>${d.year}</td><td>${fmtK(d.propertyValue)}</td><td>${fmtK(d.equity)}</td><td class="${d.netCashFlow>=0?'green':'red'}">${fmtK(d.netCashFlow)}</td><td>${fmtK(d.equity+d.cumulativeCashFlow)}</td><td>${fmtK(sell.yearlyData[i]?.investedValue||0)}</td></tr>`).join('')}
+</table>
+
+${aiSummary?`<h2>AI Investment Analysis</h2><div style="line-height:1.8;">${renderMarkdown(aiSummary)}</div>`:''}
+
+${discoveryData?`<h2>Client Profile</h2>
+<table>
+  <tr><td style="color:#94A3B8;">Situation</td><td>${discoveryData.situation||'-'}</td></tr>
+  <tr><td style="color:#94A3B8;">Priority</td><td>${discoveryData.priority||'-'}</td></tr>
+  <tr><td style="color:#94A3B8;">Risk Tolerance</td><td>${discoveryData.risk||'-'}</td></tr>
+  <tr><td style="color:#94A3B8;">Timeline</td><td>${discoveryData.timeline||'-'}</td></tr>
+  <tr><td style="color:#94A3B8;">Experience</td><td>${discoveryData.experience||'-'}</td></tr>
+</table>`:''}
+
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This report is generated by PropertyPath, a tool by Vacation Home Group. Projections are estimates based on user-provided inputs and do not constitute financial, tax, or investment advice. Consult a qualified real estate professional, CPA, or financial advisor before making investment decisions. Vacation Home Group, its agents, and this platform assume no liability for decisions made based on this analysis.<br/><br/>
+  Joe Mori & Dino Amato · Real Broker NH · Each office is independently owned and operated.<br/>
+  vacationhomegroup.net · vacationhome.group · 855-450-0442
+</div>
+
+<div class="no-print" style="text-align:center;margin-top:24px;">
+  <button onclick="window.print()" style="padding:12px 32px;border-radius:8px;border:none;background:#167A5E;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">Print / Save as PDF</button>
+</div>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
   };
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -737,12 +829,30 @@ IMPORTANT: End your response with this disclaimer on its own line, separated by 
         {aiLoading?'Generating...':'Generate Summary'}
       </button>
 
-      {aiSummary ? (
+      {aiLoading ? (
+        /* Loading skeleton */
+        <div style={{padding:20,borderRadius:10,background:'var(--bg-primary)',border:'1px solid var(--border-primary)'}}>
+          {[100,85,92,70,88].map((w,i)=>(
+            <div key={i} style={{height:16,borderRadius:4,background:'var(--border-primary)',marginBottom:12,width:`${w}%`,animation:'pulse 1.5s ease-in-out infinite',opacity:0.4}}/>
+          ))}
+          <style>{`@keyframes pulse{0%,100%{opacity:0.3}50%{opacity:0.6}}`}</style>
+          <div style={{textAlign:'center',fontSize:13,color:'var(--text-faint)',marginTop:8}}>Analyzing your property data...</div>
+        </div>
+      ) : aiSummary ? (
         <div style={{padding:20,borderRadius:10,background:'var(--bg-primary)',border:'1px solid var(--border-accent)',fontSize:15,color:'var(--text-secondary)',lineHeight:1.8}}>
           <div dangerouslySetInnerHTML={{__html: renderMarkdown(aiSummary)}} />
-          <div style={{marginTop:12,display:'flex',gap:8}}>
-            <button onClick={generateAI} style={{padding:'6px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Regenerate</button>
-            <button onClick={()=>navigator.clipboard?.writeText(aiSummary)} style={{padding:'6px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Copy</button>
+          <div style={{marginTop:16,display:'flex',gap:8,flexWrap:'wrap'}}>
+            <button onClick={generateAI} style={{padding:'8px 16px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:13,cursor:'pointer'}}>Regenerate</button>
+            <button onClick={()=>navigator.clipboard?.writeText(aiSummary)} style={{padding:'8px 16px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:13,cursor:'pointer'}}>Copy</button>
+            {proUserEmail&&<button onClick={async()=>{
+              try{
+                const resp=await fetch('/api/send-code',{method:'POST',headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({email:proUserEmail,name:'PropertyPath Summary',skipCode:true,
+                    customSubject:'Your PropertyPath Investment Analysis',
+                    customHtml:`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#F8FAFC;border-radius:12px;"><div style="text-align:center;margin-bottom:24px;"><h1 style="font-size:24px;color:#167A5E;margin:0;">Property<span style="color:#9A7820;">Path</span></h1><p style="color:#94A3B8;font-size:13px;">by Vacation Home Group</p></div><div style="font-size:15px;color:#1E293B;line-height:1.8;">${renderMarkdown(aiSummary)}</div><hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0;"/><p style="font-size:11px;color:#94A3B8;text-align:center;">Vacation Home Group &middot; Real Broker NH</p></div>`})});
+                alert(resp.ok?'Summary emailed!':'Failed to send.');
+              }catch(_e){alert('Failed to send.');}
+            }} style={{padding:'8px 16px',borderRadius:6,border:'1px solid var(--accent)',background:'transparent',color:'var(--accent)',fontSize:13,cursor:'pointer'}}>Email to Me</button>}
           </div>
         </div>
       ) : (
@@ -915,7 +1025,15 @@ IMPORTANT: End your response with this disclaimer on its own line, separated by 
       {/* Property info + action buttons */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
         <div style={{fontSize:16,fontWeight:600,color:'var(--text-muted)'}}>{formData.propertyType} · {formData.location}</div>
-        <div style={{display:'flex',gap:6}}>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          <button onClick={()=>{
+            const data = {formData:rawFormData||formData,discovery:discoveryData};
+            const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+            const url = `${window.location.origin}${window.location.pathname}?share=${encoded}`;
+            navigator.clipboard?.writeText(url);
+            alert('Share link copied to clipboard!');
+          }} style={{padding:'7px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>Share Link</button>
+          <button onClick={()=>generatePDF()} style={{padding:'7px 14px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:12,cursor:'pointer'}}>PDF Report</button>
           {!isPro&&<button onClick={onProClick} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'var(--gold)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>PRO</button>}
           <button onClick={onEditAssumptions} style={{padding:'7px 16px',borderRadius:6,border:'1px solid var(--border-primary)',background:'transparent',color:'var(--text-muted)',fontSize:13,cursor:'pointer'}}>← Edit</button>
         </div>
