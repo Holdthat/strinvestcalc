@@ -1,5 +1,5 @@
 /**
- * STRInvestCalc — Investment Decision Tool
+ * PropertyPath — Investment Decision Tool
  * Vacation Home Group · v3.3.0
  * 
  * Flow: Landing → Goal Discovery (5 questions) → Questionnaire → Dashboard
