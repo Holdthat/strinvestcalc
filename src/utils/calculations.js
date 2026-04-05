@@ -6,6 +6,8 @@ export function calculateHoldScenario(data, years = 10) {
   const vacancy = parseFloat(data.vacancyRate)||0, mortBal = parseFloat(data.mortgageBalance)||0;
   const mortRate = parseFloat(data.mortgageRate)||0, mortYrs = parseInt(data.mortgageYearsRemaining)||0;
   const appRate = parseFloat(data.annualAppreciation)||0.03;
+  const isBuyer = data.isBuyer;
+  const closingCosts = isBuyer ? pp * ((parseFloat(data.sellingCostsPct)||3)/100) : 0;
   const mR = mortRate/12, tP = mortYrs*12;
   const mPay = mortBal>0&&mR>0&&tP>0 ? mortBal*(mR*Math.pow(1+mR,tP))/(Math.pow(1+mR,tP)-1) : 0;
   const annDS = mPay*12;
@@ -37,11 +39,41 @@ export function calculateHoldScenario(data, years = 10) {
     const ncf=er-oe-m-ds; cumCF+=ncf; const eq=pv-remMort;
     yearlyData.push({year:y,propertyValue:Math.round(pv),effectiveRent:Math.round(er),opExpenses:Math.round(oe),maintenance:Math.round(m),debtService:Math.round(ds),netCashFlow:Math.round(ncf),cumulativeCashFlow:Math.round(cumCF),equity:Math.round(eq),depreciation:Math.round(annDep)});
   }
-  return {yearlyData, totalWealth:(yearlyData[years-1]?.equity||0)+cumCF, totalCashFlow:cumCF, annualCashFlow:cumCF/years, maintEvents};
+  return {yearlyData, totalWealth:(yearlyData[years-1]?.equity||0)+cumCF-closingCosts, totalCashFlow:cumCF, annualCashFlow:cumCF/years, maintEvents, closingCosts:Math.round(closingCosts)};
 }
 
 export function calculateSellScenario(data, years = 10, altReturn = 0.07) {
   const cv=parseFloat(data.currentValue)||0, pp=parseFloat(data.purchasePrice)||0, mortBal=parseFloat(data.mortgageBalance)||0;
+  const isBuyer = data.isBuyer;
+
+  if (isBuyer) {
+    // BUYER MODE: "Don't Buy, Invest Instead"
+    // The capital available is the down payment (purchase price - mortgage)
+    const downPayment = pp - mortBal;
+    const closingCostsPct = (parseFloat(data.sellingCostsPct)||3)/100;
+    const closingCosts = pp * closingCostsPct;
+    // If they don't buy, they keep their down payment + closing costs they would have spent
+    const capitalToInvest = downPayment + closingCosts;
+    const yearlyData = [];
+    for(let y=1;y<=years;y++){
+      const iv = capitalToInvest * Math.pow(1+altReturn, y);
+      yearlyData.push({year:y, investedValue:Math.round(iv)});
+    }
+    return {
+      grossProceeds: Math.round(capitalToInvest),
+      sellingCosts: Math.round(closingCosts),
+      capitalGainsTax: 0,
+      depreciationRecapture: 0,
+      netProceeds: Math.round(capitalToInvest),
+      yearlyData,
+      totalWealthAtEnd: yearlyData[years-1]?.investedValue||0,
+      isBuyerCalc: true,
+      downPayment: Math.round(downPayment),
+      closingCosts: Math.round(closingCosts),
+    };
+  }
+
+  // OWNER MODE: "Sell & Invest"
   const sellingPct=(parseFloat(data.sellingCostsPct)||7.5)/100;
   const sellCosts=cv*sellingPct, depBasis=pp*0.85, yrsOwned=parseInt(data.yearsOwned)||1;
   const totDep=Math.min((depBasis/27.5)*yrsOwned,depBasis), adjBasis=pp-totDep;
